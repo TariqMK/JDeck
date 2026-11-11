@@ -25,6 +25,9 @@ from _version import __version__
 APP_NAME = "JDeck"
 DATA_FOLDER_NAME = "JDeck-data"
 CSRF_HEADER = "X-JDeck"  # Every POST must carry this header (blocks cross-site requests).
+GITHUB_REPO = "TariqMK/JDeck"
+RELEASES_PAGE = f"https://github.com/{GITHUB_REPO}/releases"
+LATEST_RELEASE_API = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 
 DEFAULT_SETTINGS = {
     "jd_url": "http://127.0.0.1:3128",
@@ -234,6 +237,72 @@ def id_list(value):
     return value
 
 
+# ---------------------------------------------------------------- update check
+# Runs only when the user selects the version. One GET to GitHub, nothing stored.
+
+class UpdateError(Exception):
+    """The update check failed. The message is written for the user."""
+
+
+def parse_version(text):
+    """'v1.2.3' or '1.2.3' -> (1, 2, 3). Anything else (such as a dev build) -> None."""
+    m = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)", str(text or "").strip())
+    return tuple(int(x) for x in m.groups()) if m else None
+
+
+def fetch_latest_release(timeout=10):
+    request = urllib.request.Request(LATEST_RELEASE_API, headers={
+        "User-Agent": f"{APP_NAME}/{__version__}",
+        "Accept": "application/vnd.github+json",
+    })
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            body = response.read()
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            raise UpdateError(f"No {APP_NAME} releases are published yet.") from e
+        if e.code in (403, 429):
+            raise UpdateError("GitHub limits how often it can be checked. Try again in an hour.") from e
+        raise UpdateError(f"GitHub answered with error {e.code}. Try again later.") from e
+    except (urllib.error.URLError, socket.timeout, ConnectionError, OSError) as e:
+        reason = getattr(e, "reason", None) or e
+        raise UpdateError(f"Can't reach GitHub: {reason}. Check the internet connection.") from e
+    try:
+        data = json.loads(body)
+        if not isinstance(data, dict):
+            raise ValueError
+        return data
+    except ValueError as e:
+        raise UpdateError(f"GitHub sent an answer {APP_NAME} can't read. Try again later.") from e
+
+
+def check_for_update(current=__version__, fetch=fetch_latest_release):
+    """Compare this build with GitHub's latest release. Returns a dict for the page."""
+    release = fetch()
+    tag = str(release.get("tag_name") or "")
+    latest = parse_version(tag)
+    if latest is None:
+        raise UpdateError(f"GitHub sent an answer {APP_NAME} can't read. Try again later.")
+    url = release.get("html_url")
+    if not isinstance(url, str) or not url.startswith("https://"):
+        url = RELEASES_PAGE
+    notes = release.get("body")
+    mine = parse_version(current)
+    if mine is None:
+        status = "dev"
+    elif latest > mine:
+        status = "newer"
+    else:
+        status = "current"
+    return {"status": status, "current": "v" + current.lstrip("v"),
+            "latest": "v{}.{}.{}".format(*latest), "url": url,
+            "notes": notes if isinstance(notes, str) else ""}
+
+
+def is_release_url(url):
+    return isinstance(url, str) and (url == RELEASES_PAGE or url.startswith(RELEASES_PAGE + "/"))
+
+
 # ---------------------------------------------------------------- network sharing
 
 def lan_addresses():
@@ -399,6 +468,11 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({"ok": True, **self.meta(), **jd_state(base)})
             except JDError as e:
                 self.send_json({"ok": False, "offline": e.offline, "error": str(e), **self.meta()})
+        elif path == "/api/update-check":
+            try:
+                self.send_json({"ok": True, **check_for_update()})
+            except UpdateError as e:
+                self.send_json({"ok": False, "error": str(e)})
         elif path == "/api/settings":
             self.send_json({**self.meta(), "port": self.settings.get("port"),
                             "hasPassword": self.settings.has_password})
@@ -450,6 +524,16 @@ class Handler(BaseHTTPRequestHandler):
             elif path == "/api/downloads/remove":
                 # Removes entries from JDownloader's list only. Files on disk are not touched.
                 jd_call(base, "/downloadsV2/removeLinks", [], id_list(data.get("packageIds")))
+                self.send_json({"ok": True})
+            elif path == "/api/open-release":
+                # Opens the release page in the user's own browser on this PC (window only).
+                if not self.is_local:
+                    raise PermissionError("Only the JDeck window can open pages on this computer.")
+                url = data.get("url")
+                if not is_release_url(url):
+                    url = RELEASES_PAGE
+                import webbrowser
+                webbrowser.open(url)
                 self.send_json({"ok": True})
             elif path == "/api/settings":
                 self.save_settings(data)

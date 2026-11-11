@@ -57,7 +57,24 @@ header {
   margin-bottom: 18px;
 }
 header h1 { font-size: 20px; margin: 0; font-weight: 650; letter-spacing: -0.01em; }
-.version { color: var(--muted); font-size: 13px; }
+header h1 { order: -2; }
+.version {
+  order: -1; /* Shown next to the title, but last in the header's tab order. */
+  font: inherit; font-size: 13px; color: var(--muted); background: transparent;
+  border: 0; border-radius: 6px; padding: 2px 6px; min-height: 0; margin-left: -6px; cursor: pointer;
+}
+.version:hover { background: var(--surface-2); }
+.version:disabled { opacity: 1; cursor: default; }
+.version.has-update { color: var(--accent); font-weight: 600; }
+.version[hidden] { display: none; }
+#update p { margin: 0 0 10px; }
+#update .update-headline { font-weight: 600; }
+#update pre {
+  white-space: pre-wrap; overflow-wrap: anywhere; font: 13px/1.45 inherit; font-family: inherit;
+  max-height: 220px; overflow: auto; margin: 8px 0 0; padding: 10px;
+  background: var(--surface-2); border-radius: 8px;
+}
+#update details { margin-bottom: 12px; }
 .spacer { flex: 1; }
 
 .status {
@@ -168,11 +185,13 @@ dialog .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top
 <div class="wrap">
   <header>
     <h1>JDeck</h1>
-    <span class="version" id="version"></span>
     <span class="spacer"></span>
     <span class="share-pill" id="share-pill" hidden></span>
     <span class="status"><span class="dot" id="dot"></span><span id="status-text">Connecting…</span></span>
     <button class="ghost" id="open-settings" type="button">Settings</button>
+    <button class="version" id="version" type="button" title="Check for updates"
+            aria-describedby="version-desc" hidden></button>
+    <span id="version-desc" hidden>Check GitHub for a newer release.</span>
   </header>
 
   <div id="banners"></div>
@@ -257,6 +276,22 @@ dialog .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top
   </form>
 </dialog>
 
+<dialog id="update" aria-labelledby="update-title">
+  <form method="dialog">
+    <h2 id="update-title">Check for updates</h2>
+    <p class="update-headline" id="update-headline"></p>
+    <p id="update-detail"></p>
+    <details id="update-notes-box" hidden>
+      <summary>Release notes</summary>
+      <pre id="update-notes"></pre>
+    </details>
+    <div class="actions">
+      <button type="submit" class="ghost" id="update-close">Close</button>
+      <button type="button" class="primary" id="update-open" hidden>Open release page</button>
+    </div>
+  </form>
+</dialog>
+
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -321,7 +356,7 @@ const STATE_LABELS = { RUNNING: "Downloading", IDLE: "Idle", PAUSE: "Paused", ST
 
 function render(s) {
   lastState = s;
-  $("version").textContent = s.version ? `v${s.version}` : "";
+  showVersion(s.version);
 
   const banners = $("banners");
   banners.replaceChildren();
@@ -455,6 +490,86 @@ function downloadRemove(p) {
   if (!confirm(`Remove "${p.name}" from JDownloader's download list?\n\nFiles already on disk are kept. An unfinished download stops and must be added again to resume.`)) return;
   run(() => api("/api/downloads/remove", { packageIds: [p.uuid] }));
 }
+
+// ---------------------------------------------------------------- update check
+// Runs only when the user selects the version. The result is kept until JDeck closes.
+let versionText = "";
+let newerRelease = null;
+let checking = false;
+let releaseUrl = "";
+
+function showVersion(v) {
+  if (!v || checking) return;
+  const b = $("version");
+  versionText = `v${String(v).replace(/^v/, "")}`;
+  b.hidden = false;
+  b.textContent = versionText;
+  b.setAttribute("aria-label", `Version ${versionText}`);
+  b.classList.toggle("has-update", !!newerRelease);
+  b.title = newerRelease ? `${newerRelease} is available. Click for details.` : "Check for updates";
+}
+
+function showUpdateResult(r) {
+  let headline, detail, offerPage = false;
+  if (!r.ok) {
+    headline = r.error;
+    detail = "";
+  } else if (r.status === "newer") {
+    newerRelease = r.latest;
+    headline = `JDeck ${r.latest} is available.`;
+    detail = `You have ${r.current}. Open the release page to download the new version.`;
+    offerPage = true;
+  } else if (r.status === "dev") {
+    headline = "This is a development build.";
+    detail = `You are running ${r.current}. The latest release is ${r.latest}.`;
+    offerPage = true;
+  } else {
+    headline = "JDeck is up to date.";
+    detail = `${r.current} is the latest release.`;
+  }
+  releaseUrl = offerPage ? r.url : "";
+  $("update-headline").textContent = headline;
+  $("update-detail").textContent = detail;
+  $("update-detail").hidden = !detail;
+  $("update-notes").textContent = (offerPage && r.notes) || "";
+  $("update-notes-box").hidden = !(offerPage && r.notes);
+  $("update-notes-box").open = false;
+  $("update-open").hidden = !offerPage;
+  const primary = r.ok && r.status === "newer";
+  $("update-open").className = primary ? "primary" : "";
+  $("update-close").className = primary ? "ghost" : (offerPage ? "ghost" : "primary");
+  $("update").showModal();
+  (primary ? $("update-open") : $("update-close")).focus();
+}
+
+$("version").addEventListener("click", async () => {
+  if (checking) return;
+  checking = true;
+  const b = $("version");
+  b.disabled = true;
+  b.textContent = "checking…";
+  let r;
+  try {
+    r = await api("/api/update-check");
+  } catch (e) {
+    r = { ok: false, error: e.message };
+  } finally {
+    checking = false;
+    b.disabled = false;
+    showVersion(versionText.replace(/^v/, ""));
+  }
+  showUpdateResult(r);
+});
+
+$("update-open").addEventListener("click", async () => {
+  const url = releaseUrl;
+  $("update").close();
+  if (lastState && lastState.isLocal) {
+    try { await api("/api/open-release", { url }); } catch (e) { toast(e.message, true); }
+  } else {
+    window.open(url, "_blank", "noopener");
+  }
+});
 
 // ---------------------------------------------------------------- settings
 let settingsHasPassword = false;

@@ -106,6 +106,14 @@ Only the JDeck window can turn sharing on or off, or change the password and por
 
 To run JDeck on a computer without a desktop, for example a home server, start it with `--headless`. JDeck then shares the page on your network only. The first time, it asks for a password in the terminal. Press **Ctrl+C** to stop it.
 
+### Check for updates
+
+JDeck does not check for updates by itself.
+
+1. Select the version number next to **JDeck** at the top of the window.
+2. Read the result. If a newer version is available, select **Open release page**.
+3. Download the new version from the release page and replace the old program. Keep the `JDeck-data` folder.
+
 ## Privacy
 
 - No telemetry, analytics or tracking.
@@ -113,6 +121,7 @@ To run JDeck on a computer without a desktop, for example a home server, start i
 - JDeck makes these network connections only:
   - It connects to the JDownloader address you set, to send links and read the download list.
   - Only if you turn on network sharing: it serves the JDeck page on your network (port `8080` by default).
+  - When you select the version number, the app asks GitHub (api.github.com) for the latest release. It sends nothing else and nothing is downloaded.
 - The JDeck window talks to JDeck through `127.0.0.1` only. Other computers cannot reach it.
 - Settings are stored in the `JDeck-data` folder next to the program. The password is stored as a salted hash, not as text.
 - To move JDeck to another computer, copy the program and the `JDeck-data` folder.

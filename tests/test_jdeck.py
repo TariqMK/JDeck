@@ -213,6 +213,15 @@ class ServerTests(unittest.TestCase):
         self.assertFalse(self.sharing.running)
         self.assertFalse(self.settings.get("share_on_network"))
 
+    def test_open_release_is_window_only(self):
+        self.settings.set_password("pw")
+        self.settings.update(share_on_network=True)
+        self.sharing.start()
+        port = self.settings.get("port")
+        status, _ = self.request(f"http://127.0.0.1:{port}/api/open-release",
+                                 body={"url": jdeck.RELEASES_PAGE}, password="pw")
+        self.assertEqual(status, 403)
+
     def test_port_in_use_is_reported(self):
         with socket.socket() as blocker:
             blocker.bind(("0.0.0.0", 0))
@@ -223,6 +232,96 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertFalse(data["sharing"]["running"])
         self.assertIn(str(busy), data["sharing"]["error"])
+
+
+class UpdateCheckTests(unittest.TestCase):
+    """The manual update check, with the GitHub call stubbed (no network)."""
+
+    SAMPLE = {"tag_name": "v1.4.0", "html_url": "https://github.com/TariqMK/JDeck/releases/tag/v1.4.0",
+              "body": "- Faster refresh.", "draft": False, "prerelease": False}
+
+    def check(self, current, release=None):
+        return jdeck.check_for_update(current, fetch=lambda: dict(release or self.SAMPLE))
+
+    def test_parse_version(self):
+        self.assertEqual(jdeck.parse_version("v1.2.3"), (1, 2, 3))
+        self.assertEqual(jdeck.parse_version("1.2.3"), (1, 2, 3))
+        self.assertIsNone(jdeck.parse_version("0.0.0.dev0"))
+        self.assertIsNone(jdeck.parse_version("v1.2"))
+        self.assertIsNone(jdeck.parse_version(None))
+
+    def test_compares_as_numbers(self):
+        self.assertGreater(jdeck.parse_version("0.10.0"), jdeck.parse_version("0.9.0"))
+        r = self.check("0.9.0", {**self.SAMPLE, "tag_name": "v0.10.0"})
+        self.assertEqual(r["status"], "newer")
+        self.assertEqual(r["latest"], "v0.10.0")
+
+    def test_newer_release(self):
+        r = self.check("1.3.9")
+        self.assertEqual((r["status"], r["current"], r["latest"]), ("newer", "v1.3.9", "v1.4.0"))
+        self.assertEqual(r["url"], self.SAMPLE["html_url"])
+        self.assertEqual(r["notes"], "- Faster refresh.")
+
+    def test_up_to_date(self):
+        self.assertEqual(self.check("1.4.0")["status"], "current")
+        self.assertEqual(self.check("1.5.0")["status"], "current")
+
+    def test_development_build(self):
+        r = self.check("0.0.0.dev0")
+        self.assertEqual((r["status"], r["current"]), ("dev", "v0.0.0.dev0"))
+
+    def test_missing_or_insecure_url_falls_back_to_releases_page(self):
+        for url in (None, "", "http://github.com/x", "javascript:alert(1)"):
+            r = self.check("1.0.0", {**self.SAMPLE, "html_url": url})
+            self.assertEqual(r["url"], jdeck.RELEASES_PAGE)
+
+    def test_odd_tag_is_unreadable(self):
+        with self.assertRaisesRegex(jdeck.UpdateError, "can't read"):
+            self.check("1.0.0", {**self.SAMPLE, "tag_name": "latest"})
+
+    def test_release_url_check(self):
+        self.assertTrue(jdeck.is_release_url(jdeck.RELEASES_PAGE))
+        self.assertTrue(jdeck.is_release_url(self.SAMPLE["html_url"]))
+        self.assertFalse(jdeck.is_release_url("https://github.com/TariqMK/JDeck/releasesX"))
+        self.assertFalse(jdeck.is_release_url("https://evil.test/"))
+        self.assertFalse(jdeck.is_release_url(None))
+
+    def fetch_with(self, error):
+        def fake_urlopen(request, timeout=None):
+            self.request = request
+            self.timeout = timeout
+            raise error
+        original = urllib.request.urlopen
+        urllib.request.urlopen = fake_urlopen
+        try:
+            with self.assertRaises(jdeck.UpdateError) as ctx:
+                jdeck.fetch_latest_release()
+        finally:
+            urllib.request.urlopen = original
+        return str(ctx.exception)
+
+    def http_error(self, code):
+        return urllib.error.HTTPError(jdeck.LATEST_RELEASE_API, code, "x", {}, None)
+
+    def test_error_messages(self):
+        self.assertEqual(self.fetch_with(self.http_error(404)), "No JDeck releases are published yet.")
+        for code in (403, 429):
+            self.assertIn("Try again in an hour", self.fetch_with(self.http_error(code)))
+        self.assertEqual(self.fetch_with(self.http_error(500)),
+                         "GitHub answered with error 500. Try again later.")
+        msg = self.fetch_with(urllib.error.URLError("no route"))
+        self.assertEqual(msg, "Can't reach GitHub: no route. Check the internet connection.")
+        self.assertIn("timed out", self.fetch_with(socket.timeout("timed out")))
+
+    def test_request_sends_only_user_agent_and_accept(self):
+        self.fetch_with(self.http_error(404))
+        self.assertEqual(self.request.full_url, jdeck.LATEST_RELEASE_API)
+        self.assertEqual(self.request.get_method(), "GET")
+        self.assertIsNone(self.request.data)
+        headers = {k.lower(): v for k, v in self.request.header_items()}
+        self.assertEqual(set(headers), {"user-agent", "accept"})
+        self.assertTrue(headers["user-agent"].startswith("JDeck/"))
+        self.assertEqual(self.timeout, 10)
 
 
 if __name__ == "__main__":
