@@ -1,0 +1,208 @@
+# Builds JDeck for Windows x64, macOS Apple Silicon and Linux x64, then creates a
+# GitHub release. Run it by hand from the Actions tab, on main only. It never commits or
+# pushes; it only creates the tag and the release.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Draft (hidden until you publish it) or public"
+        type: choice
+        options: [draft, public]
+        default: draft
+      bump:
+        description: "Version bump"
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  APP_NAME: JDeck
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  test:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
+
+  version:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # Needed so the API also lists draft releases.
+    outputs:
+      tag: ${{ steps.next.outputs.tag }}
+      version: ${{ steps.next.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Work out the next version
+        id: next
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            git tag --list
+            gh release list --limit 1000 --json tagName --jq '.[].tagName'
+          } | bash .github/scripts/next_version.sh "${{ inputs.bump }}" > next.txt
+          tag="$(cat next.txt)"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+          echo "Next version: $tag"
+
+  build:
+    needs: version
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: windows-latest
+            target: windows-x64
+          - os: macos-latest
+            target: macos-arm64
+          - os: ubuntu-22.04
+            target: linux-x64
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      TAG: ${{ needs.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Check the macOS runner is Apple Silicon
+        if: runner.os == 'macOS'
+        run: |
+          arch="$(uname -m)"
+          echo "Runner architecture: $arch"
+          [ "$arch" = "arm64" ] || { echo "Expected arm64, got $arch"; exit 1; }
+
+      - name: Install Linux system packages (GTK and WebKitGTK for the app window)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libcairo2-dev libgirepository1.0-dev \
+            gir1.2-gtk-3.0 gir1.2-webkit2-4.1 libwebkit2gtk-4.1-0
+
+      - name: Install Python packages
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pyinstaller Pillow
+          if [ "$RUNNER_OS" = "Linux" ]; then python -m pip install "pywebview[gtk]==6.2.1"; fi
+
+      - name: Check the window libraries load
+        run: |
+          python -c "import webview; print('pywebview OK')"
+          case "$RUNNER_OS" in
+            Windows) python -c "import clr; print('pythonnet OK')" ;;
+            macOS)   python -c "import WebKit, AppKit; print('PyObjC WebKit OK')" ;;
+            Linux)   python -c "import gi; gi.require_version('Gtk', '3.0'); gi.require_version('WebKit2', '4.1'); from gi.repository import Gtk, WebKit2; print('GTK WebKit OK')" ;;
+          esac
+
+      - name: Apply the version
+        run: |
+          printf '"""The app'"'"'s version. Written by the release build."""\n\n__version__ = "%s"\n' "$VERSION" > _version.py
+          cat _version.py
+
+      - name: Build
+        run: |
+          sep=":"
+          [ "$RUNNER_OS" = "Windows" ] && sep=";"
+          mode="--onefile"
+          [ "$RUNNER_OS" = "macOS" ] && mode="--onedir"   # macOS ships a .app bundle.
+          icon="assets/icon/jdeck.png"                     # Linux files have no icon; the window uses the PNG.
+          [ "$RUNNER_OS" = "Windows" ] && icon="assets/icon/jdeck.ico"
+          [ "$RUNNER_OS" = "macOS" ] && icon="assets/icon/jdeck.icns"
+          pyinstaller --noconfirm --clean $mode --windowed \
+            --name "$APP_NAME" \
+            --icon "$icon" \
+            --osx-bundle-identifier io.github.jdeck \
+            --add-data "web/index.html${sep}web" \
+            --add-data "assets/icon/jdeck.png${sep}assets/icon" \
+            jdeck.py
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            ls "dist/$APP_NAME.app/Contents/Resources/"*.icns >/dev/null 2>&1 || { echo "The macOS app has no icon"; exit 1; }
+          fi
+
+      - name: Check the build is complete
+        run: |
+          case "$RUNNER_OS" in
+            Windows) exe="dist/$APP_NAME.exe" ;;
+            macOS)   exe="dist/$APP_NAME.app/Contents/MacOS/$APP_NAME" ;;
+            Linux)   exe="dist/$APP_NAME" ;;
+          esac
+          [ -f "$exe" ] || { echo "No executable at $exe"; ls -R dist; exit 1; }
+          "$exe" --self-check > check.txt 2>&1 || { cat check.txt; exit 1; }
+          if [ "$RUNNER_OS" != "Windows" ]; then
+            cat check.txt
+            grep -q "v$VERSION" check.txt || { echo "Version $VERSION not in the build"; exit 1; }
+          fi
+
+      - name: Package
+        run: |
+          mkdir -p out
+          name="$APP_NAME-$TAG-${{ matrix.target }}"
+          case "$RUNNER_OS" in
+            Windows) cp "dist/$APP_NAME.exe" "out/$name.exe" ;;
+            macOS)   ditto -c -k --keepParent "dist/$APP_NAME.app" "out/$name.zip" ;;
+            Linux)   tar -czf "out/$name.tar.gz" -C dist "$APP_NAME" ;;
+          esac
+          ls -la out
+          [ -n "$(ls -A out)" ] || { echo "No files were produced"; exit 1; }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.target }}
+          path: out/*
+          if-no-files-found: error
+
+  release:
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          pattern: build-*
+          merge-multiple: true
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          ls -la out
+          count="$(ls -1 out | wc -l)"
+          [ "$count" -eq 3 ] || { echo "Expected 3 files, found $count"; exit 1; }
+          draft=""
+          [ "${{ inputs.release_type }}" = "draft" ] && draft="--draft"
+          gh release create "$TAG" out/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "JDeck $TAG" \
+            --generate-notes \
+            $draft

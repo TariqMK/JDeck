@@ -1,0 +1,198 @@
+<!doctype html>
+<!-- JDeck product page for GitHub Pages: hero with a live app preview, features, downloads. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JDeck · JDownloader from any device on your network</title>
+<meta name="description" content="JDeck is a free desktop app for JDownloader 2. Paste links, watch progress and control downloads from any computer on your home network. No account, no cloud, no tracking.">
+<meta name="theme-color" content="#111210">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="JDeck">
+<meta property="og:description" content="JDownloader from any device on your network.">
+<meta property="og:url" content="https://tariqmk.github.io/JDeck/">
+<meta property="og:image" content="https://tariqmk.github.io/JDeck/social-card.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="JDeck">
+<meta name="twitter:description" content="JDownloader from any device on your network.">
+<meta name="twitter:image" content="https://tariqmk.github.io/JDeck/social-card.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-in">
+    <a class="brand" href="#top"><img src="icon.svg" alt="" width="28" height="28">JDeck</a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#features">Features</a>
+      <a href="#download">Download</a>
+      <a href="https://github.com/TariqMK/JDeck">GitHub</a>
+    </nav>
+    <a class="btn btn-small" href="#download">Download</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="hero-text">
+      <h1>JDownloader from any device <br>on your network</h1>
+      <p class="lede">JDeck is a small desktop app for JDownloader 2. Paste links, watch progress, and start or pause downloads from any computer at home. Phones and tablets can use it too, if you turn that on.</p>
+      <div class="actions">
+        <a class="btn" id="hero-download" href="https://github.com/TariqMK/JDeck/releases/latest">Download</a>
+        <a class="btn btn-ghost" href="https://github.com/TariqMK/JDeck">View source</a>
+      </div>
+      <p class="meta mono"><span id="hero-version">Free and open source</span> · Windows, macOS, Linux · No account · No tracking</p>
+    </div>
+
+    <div class="window" aria-label="Preview of the JDeck window">
+      <div class="titlebar"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>JDeck</span></div>
+      <div class="app">
+        <div class="app-head">
+          <strong>JDeck</strong><span class="muted app-version" id="app-version"></span>
+          <span class="grow"></span>
+          <span class="status"><i class="dot"></i><span id="app-state">Downloading</span></span>
+          <span class="muted app-settings">Settings</span>
+        </div>
+        <div class="card add-card">
+          <div class="card-title">Add links</div>
+          <div class="fake-input muted">Paste one or more links, or any text that contains links</div>
+          <div class="add-row">
+            <span class="fake-btn primary">Send to JDownloader</span>
+            <span class="check"><i aria-hidden="true"></i>Start downloading immediately</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Downloads <span class="count" id="dl-count"></span></span>
+            <span class="grow"></span>
+            <span class="muted speed" id="dl-speed"></span>
+            <span class="fake-btn">Start</span><span class="fake-btn">Pause</span><span class="fake-btn hide-sm">Stop</span>
+          </div>
+          <ul class="list" id="dl-list"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="principles" aria-label="Principles">
+    <div>
+      <h2>Stays on your network</h2>
+      <p>No account, no cloud and no tracking. JDeck does not use MyJDownloader. It talks only to the JDownloader address you set.</p>
+    </div>
+    <div>
+      <h2>JDownloader stays as it is</h2>
+      <p>JDeck uses JDownloader's own local API. Turn on one setting in JDownloader. There is nothing to install on that machine.</p>
+    </div>
+    <div>
+      <h2>No installer</h2>
+      <p>Download one program and start it. Settings live in a folder next to it, so copying both moves everything.</p>
+    </div>
+  </section>
+
+  <section class="features" id="features">
+    <h2 class="section-title">Send links. Watch them land.</h2>
+    <p class="section-lede">Everything JDeck shows comes from JDownloader and refreshes every 1.5 seconds.</p>
+
+    <div class="panels">
+      <article class="panel panel-wide">
+        <div class="panel-text">
+          <h3>Paste anything</h3>
+          <p>Paste a message, a forum post or a list. JDeck finds every http, https and ftp link and removes duplicates.</p>
+        </div>
+        <div class="finder">
+          <div class="finder-paste mono" id="finder-paste" aria-label="Pasted text"></div>
+          <div class="finder-found">
+            <div class="finder-head"><span>Links found</span><span class="count mono" id="finder-count"></span></div>
+            <ul id="finder-list"></ul>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-text">
+          <h3>Check before you start</h3>
+          <p>Hold new links in the LinkGrabber. See file counts, sizes and offline files, then start or remove each package.</p>
+        </div>
+        <div class="mini card">
+          <div class="card-head">
+            <span class="card-title">Waiting in LinkGrabber <span class="count" id="lg-count"></span></span>
+            <span class="grow"></span><span class="fake-btn">Start all</span>
+          </div>
+          <ul class="list" id="lg-list"></ul>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-text">
+          <h3>Phones and tablets, if you want</h3>
+          <p>Network sharing is off by default. Turn it on, set a password, and open JDeck in any browser at home.</p>
+        </div>
+        <div class="mini card share">
+          <div class="card-title">Phones and other devices</div>
+          <span class="check on"><i aria-hidden="true"></i>Let other devices on my network use JDeck</span>
+          <label class="field"><span class="muted">Password for other devices</span><span class="fake-input mono">••••••••••</span></label>
+          <label class="field"><span class="muted">Port</span><span class="fake-input mono port">8080</span></label>
+          <p class="share-address">On other devices, open <span class="mono">http://192.168.1.20:8080</span> and sign in with the password.</p>
+        </div>
+      </article>
+    </div>
+
+    <ul class="grid">
+      <li><strong>Find links in any text</strong><span>Duplicates are removed before anything is sent.</span></li>
+      <li><strong>Start now or hold</strong><span>Send links straight to the download list, or to the LinkGrabber.</span></li>
+      <li><strong>Name and folder</strong><span>Set a package name and a save folder on the JDownloader machine.</span></li>
+      <li><strong>Live progress</strong><span>Size, speed and time left for every package.</span></li>
+      <li><strong>Start, pause, stop</strong><span>Control all downloads with one button each.</span></li>
+      <li><strong>Remove with care</strong><span>JDeck asks first. Files already on disk are kept.</span></li>
+      <li><strong>Light and dark</strong><span>Follows your system setting.</span></li>
+      <li><strong>Runs on a server</strong><span>Start it with <code>--headless</code> for a computer without a desktop.</span></li>
+    </ul>
+  </section>
+
+  <section class="download" id="download">
+    <h2 class="section-title">Download <span class="muted mono" id="dl-version"></span></h2>
+    <p class="section-lede">Free and open source. JDeck needs JDownloader 2 with its local API turned on. See the <a href="https://github.com/TariqMK/JDeck#setup">setup steps</a>.</p>
+    <div class="platforms">
+      <a class="platform" data-os="windows" href="https://github.com/TariqMK/JDeck/releases/latest">
+        <span class="track" aria-hidden="true"></span>
+        <strong>Windows</strong>
+        <span class="mono muted">x64 · .exe<span class="size"></span></span>
+        <p>Uses Microsoft Edge WebView2, part of Windows 10 and 11. The file is not code-signed: if SmartScreen warns, select More info, then Run anyway.</p>
+      </a>
+      <a class="platform" data-os="macos" href="https://github.com/TariqMK/JDeck/releases/latest">
+        <span class="track" aria-hidden="true"></span>
+        <strong>macOS</strong>
+        <span class="mono muted">Apple Silicon · .zip<span class="size"></span></span>
+        <p>Not code-signed. The first time, open System Settings &gt; Privacy &amp; Security and select Open Anyway.</p>
+      </a>
+      <a class="platform" data-os="linux" href="https://github.com/TariqMK/JDeck/releases/latest">
+        <span class="track" aria-hidden="true"></span>
+        <strong>Linux</strong>
+        <span class="mono muted">x64 · .tar.gz<span class="size"></span></span>
+        <p>Needs WebKitGTK, for example <code>gir1.2-webkit2-4.1</code> on Ubuntu. Without it, JDeck opens in your browser.</p>
+      </a>
+    </div>
+    <p class="fine">Prefer to run it yourself? JDeck runs from source with Python 3.10 or later. See <a href="https://github.com/TariqMK/JDeck#run-from-source">Run from source</a>.</p>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer-in">
+    <span class="brand"><img src="icon.svg" alt="" width="22" height="22">JDeck</span>
+    <p class="muted">An independent project. Not affiliated with or endorsed by AppWork GmbH or JDownloader.</p>
+    <nav aria-label="Project links">
+      <a href="https://github.com/TariqMK/JDeck">GitHub</a>
+      <a href="https://github.com/TariqMK/JDeck/releases">Releases</a>
+      <a href="https://github.com/TariqMK/JDeck/issues">Issues</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

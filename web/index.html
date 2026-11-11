@@ -1,0 +1,529 @@
+<!doctype html>
+<!-- JDeck web page: paste links to send to JDownloader and watch its downloads. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>JDeck</title>
+<link rel="icon" href="/icon.png">
+<link rel="apple-touch-icon" href="/icon.png">
+<style>
+:root {
+  --bg: #f4f3ef;
+  --surface: #ffffff;
+  --surface-2: #f0efea;
+  --line: #e2e0d8;
+  --text: #1d1d1b;
+  --muted: #6b6a64;
+  --accent: #1f6f5c;
+  --accent-text: #ffffff;
+  --accent-soft: #e2efe9;
+  --danger: #b3412e;
+  --warn: #a86a12;
+  --bar: #1f6f5c;
+  --bar-done: #8aa89e;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161715;
+    --surface: #1f201e;
+    --surface-2: #272926;
+    --line: #333531;
+    --text: #ecebe6;
+    --muted: #9c9b94;
+    --accent: #5cb89c;
+    --accent-text: #0e1a16;
+    --accent-soft: #1f3a32;
+    --danger: #e0796a;
+    --warn: #d9a54a;
+    --bar: #5cb89c;
+    --bar-done: #4d6a61;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+.wrap { max-width: 920px; margin: 0 auto; padding: 20px 16px 48px; }
+
+header {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+header h1 { font-size: 20px; margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+.version { color: var(--muted); font-size: 13px; }
+.spacer { flex: 1; }
+
+.status {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--muted);
+}
+.share-pill {
+  font-size: 12px; color: var(--accent); background: var(--accent-soft);
+  padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.dot.ok { background: var(--accent); }
+.dot.bad { background: var(--danger); }
+
+button, .btn {
+  font: inherit; font-size: 14px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--text);
+  padding: 7px 13px; border-radius: 8px; min-height: 36px;
+}
+button:hover { background: var(--surface-2); }
+button:disabled { opacity: .5; cursor: default; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+button.primary:hover { filter: brightness(1.06); }
+button.ghost { border-color: transparent; background: transparent; color: var(--muted); }
+button.ghost:hover { color: var(--text); background: var(--surface-2); }
+button.danger { color: var(--danger); }
+button:focus-visible, textarea:focus-visible, input:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+
+.card {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 16px;
+}
+.card h2 {
+  font-size: 15px; margin: 0; font-weight: 650;
+}
+.card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.count { color: var(--muted); font-size: 13px; font-weight: 400; }
+
+textarea, input[type=text], input[type=password], input[type=number] {
+  width: 100%; font: inherit; color: var(--text);
+  background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  padding: 10px 12px;
+}
+textarea { min-height: 110px; resize: vertical; font-size: 14px; }
+label.field { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+@media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
+
+.send-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+.toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; user-select: none; }
+.toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
+details summary { cursor: pointer; color: var(--muted); font-size: 13px; margin-top: 12px; }
+
+.controls { display: flex; gap: 8px; flex-wrap: wrap; }
+.speed { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); }
+
+.list { list-style: none; margin: 0; padding: 0; }
+.item { padding: 12px 0; border-top: 1px solid var(--line); }
+.item:first-child { border-top: 0; padding-top: 4px; }
+.item-top { display: flex; align-items: baseline; gap: 10px; }
+.name { flex: 1; min-width: 0; font-weight: 550; overflow-wrap: anywhere; }
+.meta { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
+.meta .state-err { color: var(--danger); }
+.meta .state-done { color: var(--accent); }
+.bar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; margin-top: 8px; }
+.bar > span { display: block; height: 100%; background: var(--bar); transition: width .4s ease; }
+.bar.done > span { background: var(--bar-done); }
+.empty { color: var(--muted); font-size: 14px; padding: 6px 0; }
+
+.banner {
+  border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 14px;
+  border: 1px solid var(--line); background: var(--surface);
+}
+.banner.warn { border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); }
+.banner.err { border-color: color-mix(in srgb, var(--danger) 45%, var(--line)); }
+.banner button { margin-left: 6px; }
+
+#toast {
+  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%) translateY(20px);
+  background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 8px;
+  font-size: 14px; opacity: 0; pointer-events: none; transition: all .2s ease; max-width: calc(100% - 32px);
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.err { background: var(--danger); color: #fff; }
+
+dialog {
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 20px;
+  background: var(--surface); color: var(--text); width: min(440px, calc(100% - 32px));
+}
+dialog::backdrop { background: rgba(0,0,0,.35); }
+dialog h2 { margin: 0 0 14px; font-size: 17px; }
+dialog .field-block { margin-bottom: 14px; }
+dialog .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+dialog fieldset {
+  border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px 4px; margin: 0 0 14px;
+}
+dialog legend { font-size: 13px; font-weight: 600; padding: 0 6px; }
+dialog fieldset > .hint { margin: 6px 0 12px; }
+#share-options[hidden] { display: none; }
+.share-address { font-size: 13px; margin-bottom: 12px; overflow-wrap: anywhere; }
+.share-address.err { color: var(--danger); }
+dialog .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>JDeck</h1>
+    <span class="version" id="version"></span>
+    <span class="spacer"></span>
+    <span class="share-pill" id="share-pill" hidden></span>
+    <span class="status"><span class="dot" id="dot"></span><span id="status-text">Connecting…</span></span>
+    <button class="ghost" id="open-settings" type="button">Settings</button>
+  </header>
+
+  <div id="banners"></div>
+
+  <section class="card" aria-labelledby="add-title">
+    <div class="card-head"><h2 id="add-title">Add links</h2></div>
+    <textarea id="links" placeholder="Paste one or more links, or any text that contains links" spellcheck="false"></textarea>
+    <details id="more">
+      <summary>More options</summary>
+      <div class="grid2">
+        <div>
+          <label class="field" for="package-name">Package name</label>
+          <input type="text" id="package-name" placeholder="Let JDownloader decide">
+        </div>
+        <div>
+          <label class="field" for="destination">Save to folder (on the JDownloader machine)</label>
+          <input type="text" id="destination" placeholder="JDownloader's default folder">
+        </div>
+      </div>
+    </details>
+    <div class="send-row">
+      <button class="primary" id="send" type="button">Send to JDownloader</button>
+      <label class="toggle"><input type="checkbox" id="autostart" checked> Start downloading immediately</label>
+      <span class="spacer"></span>
+      <span class="count" id="link-count"></span>
+    </div>
+  </section>
+
+  <section class="card" id="grabber-card" aria-labelledby="grabber-title" hidden>
+    <div class="card-head">
+      <h2 id="grabber-title">Waiting in LinkGrabber <span class="count" id="grabber-count"></span></h2>
+      <span class="spacer"></span>
+      <button type="button" id="grabber-start-all">Start all</button>
+    </div>
+    <ul class="list" id="grabber-list"></ul>
+  </section>
+
+  <section class="card" aria-labelledby="dl-title">
+    <div class="card-head">
+      <h2 id="dl-title">Downloads <span class="count" id="dl-count"></span></h2>
+      <span class="spacer"></span>
+      <span class="speed" id="speed"></span>
+      <div class="controls">
+        <button type="button" id="btn-start">Start</button>
+        <button type="button" id="btn-pause">Pause</button>
+        <button type="button" id="btn-stop">Stop</button>
+      </div>
+    </div>
+    <ul class="list" id="dl-list"></ul>
+  </section>
+</div>
+
+<dialog id="settings">
+  <form method="dialog" id="settings-form">
+    <h2>Settings</h2>
+    <div class="field-block">
+      <label class="field" for="set-jd">JDownloader address</label>
+      <input type="text" id="set-jd" placeholder="jd-host.local:3128" spellcheck="false">
+      <div class="hint">The machine running JDownloader, and its local API port (usually 3128).</div>
+    </div>
+    <fieldset id="share-section">
+      <legend>Phones and other devices</legend>
+      <label class="toggle"><input type="checkbox" id="set-share"> Let other devices on my network use JDeck</label>
+      <div class="hint">Off: only this window can use JDeck. On: phones, tablets and other computers open JDeck in a browser and sign in with the password.</div>
+      <div id="share-options">
+        <div class="field-block">
+          <label class="field" for="set-password">Password for other devices</label>
+          <input type="password" id="set-password" autocomplete="new-password">
+          <div class="hint" id="password-hint"></div>
+        </div>
+        <div class="field-block">
+          <label class="field" for="set-port">Port</label>
+          <input type="number" id="set-port" min="1024" max="65535">
+        </div>
+        <div class="share-address" id="share-address"></div>
+      </div>
+    </fieldset>
+    <div class="actions">
+      <button type="button" class="ghost" id="settings-cancel">Cancel</button>
+      <button type="submit" class="primary" id="settings-save">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const POLL_MS = 1500;
+let lastState = null;
+let busy = false;
+
+// ---------------------------------------------------------------- helpers
+async function api(path, body) {
+  const opts = body === undefined ? {} : {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-JDeck": "1" },
+    body: JSON.stringify(body),
+  };
+  const res = await fetch(path, opts);
+  let data = {};
+  try { data = await res.json(); } catch (_) {}
+  if (!res.ok) throw new Error(data.error || `Request failed (${res.status}).`);
+  return data;
+}
+
+function toast(message, isError = false) {
+  const t = $("toast");
+  t.textContent = message;
+  t.className = "show" + (isError ? " err" : "");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => (t.className = ""), isError ? 5000 : 2500);
+}
+
+function bytes(n) {
+  if (!n || n < 0) return "–";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let i = 0;
+  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+  return `${n.toFixed(i === 0 ? 0 : n < 10 ? 1 : 0)} ${units[i]}`;
+}
+const speed = (n) => (n > 0 ? `${bytes(n)}/s` : "");
+function eta(sec) {
+  if (!sec || sec < 0) return "";
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = Math.floor(sec % 60);
+  return h ? `${h}h ${m}m left` : m ? `${m}m ${s}s left` : `${s}s left`;
+}
+function el(tag, attrs = {}, ...children) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") e.className = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v);
+  }
+  for (const c of children) if (c != null && c !== false) e.append(c);
+  return e;
+}
+function countLinks(text) {
+  const found = text.match(/(?:https?|ftp):\/\/[^\s<>"'`]+/gi) || [];
+  return new Set(found).size;
+}
+
+// ---------------------------------------------------------------- rendering
+const STATE_LABELS = { RUNNING: "Downloading", IDLE: "Idle", PAUSE: "Paused", STOPPED_STATE: "Stopped", STOPPING: "Stopping" };
+
+function render(s) {
+  lastState = s;
+  $("version").textContent = s.version ? `v${s.version}` : "";
+
+  const banners = $("banners");
+  banners.replaceChildren();
+  const sh = s.sharing || {};
+  const pill = $("share-pill");
+  pill.hidden = !(s.isLocal && sh.running);
+  pill.textContent = sh.running ? `Shared on network · ${sh.address}` : "";
+  if (s.isLocal && sh.enabled && !sh.running && sh.error) {
+    banners.append(el("div", { class: "banner err" },
+      `Network sharing is not working: ${sh.error}`,
+      el("button", { type: "button", class: "ghost", onclick: openSettings }, "Settings")));
+  }
+
+  if (!s.ok) {
+    $("dot").className = "dot bad";
+    $("status-text").textContent = s.offline ? "JDownloader not reachable" : "JDownloader error";
+    banners.append(el("div", { class: "banner err" },
+      `${s.error} (Address: ${s.jdUrl})`,
+      el("button", { type: "button", class: "ghost", onclick: openSettings }, "Change address")));
+    $("speed").textContent = "";
+    return;
+  }
+
+  $("dot").className = "dot ok";
+  $("status-text").textContent = STATE_LABELS[s.state] || s.state || "Connected";
+  $("speed").textContent = speed(s.speed);
+  $("btn-pause").textContent = s.state === "PAUSE" ? "Resume" : "Pause";
+
+  // LinkGrabber
+  const grabber = s.linkgrabber || [];
+  $("grabber-card").hidden = grabber.length === 0;
+  $("grabber-count").textContent = grabber.length ? `· ${grabber.length}` : "";
+  $("grabber-list").replaceChildren(...grabber.map((p) => el("li", { class: "item" },
+    el("div", { class: "item-top" },
+      el("span", { class: "name" }, p.name || "Unnamed package"),
+      el("button", { type: "button", onclick: () => grabberStart([p.uuid]) }, "Start"),
+      el("button", { type: "button", class: "ghost danger", "aria-label": `Remove ${p.name}`,
+        onclick: () => grabberRemove(p) }, "Remove")),
+    el("div", { class: "meta" },
+      el("span", {}, `${p.childCount || 0} file${p.childCount === 1 ? "" : "s"}`),
+      p.bytesTotal > 0 && el("span", {}, bytes(p.bytesTotal)),
+      p.offlineCount > 0 && el("span", { class: "state-err" }, `${p.offlineCount} offline`),
+      (p.hosts || []).length > 0 && el("span", {}, p.hosts.join(", "))))));
+
+  // Downloads
+  const downloads = s.downloads || [];
+  $("dl-count").textContent = downloads.length ? `· ${downloads.length}` : "";
+  const list = $("dl-list");
+  if (!downloads.length) {
+    list.replaceChildren(el("li", { class: "empty" }, "Nothing in the download list."));
+    return;
+  }
+  list.replaceChildren(...downloads.map((p) => {
+    const pct = p.bytesTotal > 0 ? Math.min(100, (p.bytesLoaded / p.bytesTotal) * 100) : (p.finished ? 100 : 0);
+    const statusClass = p.finished ? "state-done" : /error|fail|offline|abort/i.test(p.status || "") ? "state-err" : "";
+    return el("li", { class: "item" },
+      el("div", { class: "item-top" },
+        el("span", { class: "name" }, p.name || "Unnamed package"),
+        el("button", { type: "button", class: "ghost", "aria-label": `Remove ${p.name} from the list`,
+          onclick: () => downloadRemove(p) }, "Remove")),
+      el("div", { class: p.finished ? "bar done" : "bar" }, el("span", { style: `width:${pct.toFixed(1)}%` })),
+      el("div", { class: "meta" },
+        el("span", {}, `${bytes(p.bytesLoaded)} of ${bytes(p.bytesTotal)}`),
+        el("span", {}, `${Math.floor(pct)}%`),
+        p.running && p.speed > 0 && el("span", {}, speed(p.speed)),
+        p.running && el("span", {}, eta(p.eta)),
+        (p.status || p.finished) && el("span", { class: statusClass }, p.status || "Finished"),
+        `${p.childCount || 0} file${p.childCount === 1 ? "" : "s"}`));
+  }));
+}
+
+async function refresh() {
+  try {
+    render(await api("/api/state"));
+  } catch (e) {
+    $("dot").className = "dot bad";
+    $("status-text").textContent = "JDeck not reachable";
+  }
+}
+
+// ---------------------------------------------------------------- actions
+async function run(fn) {
+  if (busy) return;
+  busy = true;
+  try { await fn(); } catch (e) { toast(e.message, true); } finally { busy = false; refresh(); }
+}
+
+$("links").addEventListener("input", () => {
+  const n = countLinks($("links").value);
+  $("link-count").textContent = n ? `${n} link${n === 1 ? "" : "s"} found` : "";
+});
+
+$("send").addEventListener("click", () => run(async () => {
+  const text = $("links").value;
+  if (!countLinks(text)) { toast("Paste at least one link first.", true); return; }
+  const r = await api("/api/add", {
+    text,
+    autostart: $("autostart").checked,
+    packageName: $("package-name").value,
+    destination: $("destination").value,
+  });
+  $("links").value = "";
+  $("package-name").value = "";
+  $("link-count").textContent = "";
+  toast(`Sent ${r.added} link${r.added === 1 ? "" : "s"} to JDownloader.`);
+}));
+
+$("links").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) $("send").click();
+});
+
+$("btn-start").addEventListener("click", () => run(() => api("/api/control", { action: "start" })));
+$("btn-stop").addEventListener("click", () => run(() => api("/api/control", { action: "stop" })));
+$("btn-pause").addEventListener("click", () => run(() =>
+  api("/api/control", { action: lastState && lastState.state === "PAUSE" ? "resume" : "pause" })));
+
+function grabberStart(ids) {
+  run(async () => {
+    const r = await api("/api/linkgrabber/start", { packageIds: ids });
+    toast(`Started ${r.moved} package${r.moved === 1 ? "" : "s"}.`);
+  });
+}
+$("grabber-start-all").addEventListener("click", () => grabberStart([]));
+
+function grabberRemove(p) {
+  if (!confirm(`Remove "${p.name}" from the LinkGrabber?\n\nNothing has been downloaded yet, so no files are affected.`)) return;
+  run(() => api("/api/linkgrabber/remove", { packageIds: [p.uuid] }));
+}
+
+function downloadRemove(p) {
+  if (!confirm(`Remove "${p.name}" from JDownloader's download list?\n\nFiles already on disk are kept. An unfinished download stops and must be added again to resume.`)) return;
+  run(() => api("/api/downloads/remove", { packageIds: [p.uuid] }));
+}
+
+// ---------------------------------------------------------------- settings
+let settingsHasPassword = false;
+
+function showShareAddress(info) {
+  const box = $("share-address");
+  box.className = "share-address";
+  if (info.running) {
+    box.textContent = `On other devices, open ${info.address} and sign in with the password (any user name).`;
+  } else if (info.enabled && info.error) {
+    box.className = "share-address err";
+    box.textContent = info.error;
+  } else {
+    box.textContent = "";
+  }
+}
+
+function updateShareOptions() {
+  $("share-options").hidden = !$("set-share").checked;
+}
+
+async function openSettings() {
+  try {
+    const s = await api("/api/settings");
+    settingsHasPassword = s.hasPassword;
+    $("set-jd").value = s.jdUrl;
+    $("share-section").hidden = !s.isLocal;
+    $("set-share").checked = !!s.sharing.enabled;
+    $("set-port").value = s.port;
+    $("set-password").value = "";
+    $("set-password").placeholder = s.hasPassword ? "Leave empty to keep the current password" : "Required";
+    $("password-hint").textContent = s.hasPassword
+      ? "A password is set."
+      : "Other devices must type this password to use JDeck.";
+    showShareAddress(s.sharing);
+    updateShareOptions();
+    $("settings").showModal();
+  } catch (e) { toast(e.message, true); }
+}
+$("open-settings").addEventListener("click", openSettings);
+$("settings-cancel").addEventListener("click", () => $("settings").close());
+$("set-share").addEventListener("change", updateShareOptions);
+
+$("settings-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const body = { jdUrl: $("set-jd").value };
+  if (!$("share-section").hidden) {
+    body.shareOnNetwork = $("set-share").checked;
+    const pw = $("set-password").value;
+    if (body.shareOnNetwork) {
+      if (!pw && !settingsHasPassword) { toast("Set a password for other devices first.", true); $("set-password").focus(); return; }
+      body.port = Number($("set-port").value);
+      if (pw) body.password = pw;
+    }
+  }
+  run(async () => {
+    const r = await api("/api/settings", body);
+    if (r.sharing && r.sharing.enabled && !r.sharing.running) {
+      showShareAddress(r.sharing);  // Keep the dialog open so the error is seen.
+      return;
+    }
+    $("settings").close();
+    toast(r.sharing && r.sharing.running ? `Sharing on ${r.sharing.address}` : "Settings saved.");
+  });
+});
+
+refresh();
+setInterval(() => { if (!document.hidden && !busy) refresh(); }, POLL_MS);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+</script>
+</body>
+</html>

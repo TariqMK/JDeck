@@ -1,0 +1,51 @@
+# Private
+Meta/
+
+# App data created at run time
+JDeck-data/
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Build output (PyInstaller)
+build/
+dist/
+*.spec
+
+# OS clutter
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# AI tools
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+AGENTS.md
+.agents/
+.codex/
+.gemini/
+GEMINI.md
+.cursor/
+.cursorrules
+.cursorignore
+.windsurf/
+.windsurfrules
+.codeium/
+.continue/
+.aider*
+.clinerules
+.cline/
+.roo/
+.roomodes
+.kiro/
+.junie/
+.amazonq/
+.specstory/
+.github/copilot-instructions.md
+.github/instructions/
+.github/prompts/
+.mcp.json
