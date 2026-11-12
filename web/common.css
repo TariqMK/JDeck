@@ -1,0 +1,80 @@
+/* JDeck: styles shared by the JDeck page, the sign-in page and the server control page. */
+:root {
+  --bg: #f4f3ef;
+  --surface: #ffffff;
+  --surface-2: #f0efea;
+  --line: #e2e0d8;
+  --text: #1d1d1b;
+  --muted: #6b6a64;
+  --accent: #1f6f5c;
+  --accent-text: #ffffff;
+  --accent-soft: #e2efe9;
+  --danger: #b3412e;
+  --warn: #a86a12;
+  --bar: #1f6f5c;
+  --bar-done: #8aa89e;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161715;
+    --surface: #1f201e;
+    --surface-2: #272926;
+    --line: #333531;
+    --text: #ecebe6;
+    --muted: #9c9b94;
+    --accent: #5cb89c;
+    --accent-text: #0e1a16;
+    --accent-soft: #1f3a32;
+    --danger: #e0796a;
+    --warn: #d9a54a;
+    --bar: #5cb89c;
+    --bar-done: #4d6a61;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+.wrap { max-width: 920px; margin: 0 auto; padding: 20px 16px 48px; }
+
+button, .btn {
+  font: inherit; font-size: 14px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--text);
+  padding: 7px 13px; border-radius: 8px; min-height: 36px;
+}
+button:hover { background: var(--surface-2); }
+button:disabled { opacity: .5; cursor: default; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+button.primary:hover { filter: brightness(1.06); }
+button.ghost { border-color: transparent; background: transparent; color: var(--muted); }
+button.ghost:hover { color: var(--text); background: var(--surface-2); }
+button.danger { color: var(--danger); }
+button:focus-visible, textarea:focus-visible, input:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+
+.card {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 16px;
+}
+
+textarea, input[type=text], input[type=password], input[type=number] {
+  width: 100%; font: inherit; color: var(--text);
+  background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  padding: 10px 12px;
+}
+textarea { min-height: 110px; resize: vertical; font-size: 14px; }
+label.field { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+
+#toast {
+  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%) translateY(20px);
+  background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 8px;
+  font-size: 14px; opacity: 0; pointer-events: none; transition: all .2s ease; max-width: calc(100% - 32px);
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.err { background: var(--danger); color: #fff; }

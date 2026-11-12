@@ -3,6 +3,8 @@ Meta/
 
 # App data created at run time
 JDeck-data/
+JDeck-Desktop-data/
+JDeck-Server-data/
 
 # Python
 __pycache__/

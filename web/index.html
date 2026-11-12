@@ -8,50 +8,8 @@
 <title>JDeck</title>
 <link rel="icon" href="/icon.png">
 <link rel="apple-touch-icon" href="/icon.png">
+<link rel="stylesheet" href="/common.css">
 <style>
-:root {
-  --bg: #f4f3ef;
-  --surface: #ffffff;
-  --surface-2: #f0efea;
-  --line: #e2e0d8;
-  --text: #1d1d1b;
-  --muted: #6b6a64;
-  --accent: #1f6f5c;
-  --accent-text: #ffffff;
-  --accent-soft: #e2efe9;
-  --danger: #b3412e;
-  --warn: #a86a12;
-  --bar: #1f6f5c;
-  --bar-done: #8aa89e;
-  --radius: 10px;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #161715;
-    --surface: #1f201e;
-    --surface-2: #272926;
-    --line: #333531;
-    --text: #ecebe6;
-    --muted: #9c9b94;
-    --accent: #5cb89c;
-    --accent-text: #0e1a16;
-    --accent-soft: #1f3a32;
-    --danger: #e0796a;
-    --warn: #d9a54a;
-    --bar: #5cb89c;
-    --bar-done: #4d6a61;
-  }
-}
-* { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-}
-.wrap { max-width: 920px; margin: 0 auto; padding: 20px 16px 48px; }
-
 header {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   margin-bottom: 18px;
@@ -81,47 +39,16 @@ header h1 { order: -2; }
   display: inline-flex; align-items: center; gap: 8px;
   font-size: 13px; color: var(--muted);
 }
-.share-pill {
-  font-size: 12px; color: var(--accent); background: var(--accent-soft);
-  padding: 3px 10px; border-radius: 999px; white-space: nowrap;
-}
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
 .dot.ok { background: var(--accent); }
 .dot.bad { background: var(--danger); }
 
-button, .btn {
-  font: inherit; font-size: 14px; cursor: pointer;
-  border: 1px solid var(--line); background: var(--surface); color: var(--text);
-  padding: 7px 13px; border-radius: 8px; min-height: 36px;
-}
-button:hover { background: var(--surface-2); }
-button:disabled { opacity: .5; cursor: default; }
-button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
-button.primary:hover { filter: brightness(1.06); }
-button.ghost { border-color: transparent; background: transparent; color: var(--muted); }
-button.ghost:hover { color: var(--text); background: var(--surface-2); }
-button.danger { color: var(--danger); }
-button:focus-visible, textarea:focus-visible, input:focus-visible {
-  outline: 2px solid var(--accent); outline-offset: 2px;
-}
-
-.card {
-  background: var(--surface); border: 1px solid var(--line);
-  border-radius: var(--radius); padding: 16px; margin-bottom: 16px;
-}
 .card h2 {
   font-size: 15px; margin: 0; font-weight: 650;
 }
 .card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
 .count { color: var(--muted); font-size: 13px; font-weight: 400; }
 
-textarea, input[type=text], input[type=password], input[type=number] {
-  width: 100%; font: inherit; color: var(--text);
-  background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
-  padding: 10px 12px;
-}
-textarea { min-height: 110px; resize: vertical; font-size: 14px; }
-label.field { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
 @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
 
@@ -154,14 +81,6 @@ details summary { cursor: pointer; color: var(--muted); font-size: 13px; margin-
 .banner.err { border-color: color-mix(in srgb, var(--danger) 45%, var(--line)); }
 .banner button { margin-left: 6px; }
 
-#toast {
-  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%) translateY(20px);
-  background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 8px;
-  font-size: 14px; opacity: 0; pointer-events: none; transition: all .2s ease; max-width: calc(100% - 32px);
-}
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-#toast.err { background: var(--danger); color: #fff; }
-
 dialog {
   border: 1px solid var(--line); border-radius: var(--radius); padding: 20px;
   background: var(--surface); color: var(--text); width: min(440px, calc(100% - 32px));
@@ -170,14 +89,17 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
 dialog h2 { margin: 0 0 14px; font-size: 17px; }
 dialog .field-block { margin-bottom: 14px; }
 dialog .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
-dialog fieldset {
-  border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px 4px; margin: 0 0 14px;
-}
-dialog legend { font-size: 13px; font-weight: 600; padding: 0 6px; }
-dialog fieldset > .hint { margin: 6px 0 12px; }
-#share-options[hidden] { display: none; }
-.share-address { font-size: 13px; margin-bottom: 12px; overflow-wrap: anywhere; }
-.share-address.err { color: var(--danger); }
+.input-row { display: flex; gap: 8px; }
+.input-row input { flex: 1; min-width: 0; }
+.input-row button { white-space: nowrap; }
+.test-result { font-size: 13px; margin-top: 8px; overflow-wrap: anywhere; }
+.test-result:empty { display: none; }
+.test-result.ok { color: var(--accent); }
+.test-result.err { color: var(--danger); }
+dialog details.help { margin: 0 0 14px; font-size: 13px; }
+dialog details.help summary { margin-top: 0; }
+dialog details.help ol { margin: 8px 0; padding-left: 20px; line-height: 1.5; }
+dialog details.help p { margin: 8px 0 0; color: var(--muted); }
 dialog .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
 </style>
 </head>
@@ -186,9 +108,10 @@ dialog .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top
   <header>
     <h1>JDeck</h1>
     <span class="spacer"></span>
-    <span class="share-pill" id="share-pill" hidden></span>
     <span class="status"><span class="dot" id="dot"></span><span id="status-text">Connecting…</span></span>
-    <button class="ghost" id="open-settings" type="button">Settings</button>
+    <button class="ghost" id="open-settings" type="button" hidden>Settings</button>
+    <button class="ghost" id="server-settings" type="button" hidden>Server settings</button>
+    <button class="ghost" id="sign-out" type="button" hidden>Sign out</button>
     <button class="version" id="version" type="button" title="Check for updates"
             aria-describedby="version-desc" hidden></button>
     <span id="version-desc" hidden>Check GitHub for a newer release.</span>
@@ -249,26 +172,24 @@ dialog .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top
     <h2>Settings</h2>
     <div class="field-block">
       <label class="field" for="set-jd">JDownloader address</label>
-      <input type="text" id="set-jd" placeholder="jd-host.local:3128" spellcheck="false">
-      <div class="hint">The machine running JDownloader, and its local API port (usually 3128).</div>
-    </div>
-    <fieldset id="share-section">
-      <legend>Phones and other devices</legend>
-      <label class="toggle"><input type="checkbox" id="set-share"> Let other devices on my network use JDeck</label>
-      <div class="hint">Off: only this window can use JDeck. On: phones, tablets and other computers open JDeck in a browser and sign in with the password.</div>
-      <div id="share-options">
-        <div class="field-block">
-          <label class="field" for="set-password">Password for other devices</label>
-          <input type="password" id="set-password" autocomplete="new-password">
-          <div class="hint" id="password-hint"></div>
-        </div>
-        <div class="field-block">
-          <label class="field" for="set-port">Port</label>
-          <input type="number" id="set-port" min="1024" max="65535">
-        </div>
-        <div class="share-address" id="share-address"></div>
+      <div class="input-row">
+        <input type="text" id="set-jd" placeholder="jd-host.local:3128" spellcheck="false" autocomplete="off">
+        <button type="button" id="test-jd">Test connection</button>
       </div>
-    </fieldset>
+      <div class="hint">The computer running JDownloader, and its local API port (usually 3128).</div>
+      <div class="test-result" id="test-result" role="status" aria-live="polite"></div>
+    </div>
+    <details class="help" id="jd-help">
+      <summary>How to let JDeck connect to JDownloader</summary>
+      <ol>
+        <li>On the JDownloader computer, open Settings &gt; Advanced Settings.</li>
+        <li>Type <code>deprecated</code> in the filter.</li>
+        <li>Turn on <strong>RemoteAPI: Deprecated Api Enabled</strong>.</li>
+        <li>If JDeck runs on another computer, turn off <strong>RemoteAPI: Deprecated Api Localhost Only</strong>.</li>
+        <li>Restart JDownloader.</li>
+      </ol>
+      <p><strong>Caution:</strong> JDownloader's local API has no password. After step 4, every device on your network can control JDownloader. To keep it closed, use JDeck Server on the JDownloader computer instead.</p>
+    </details>
     <div class="actions">
       <button type="button" class="ghost" id="settings-cancel">Cancel</button>
       <button type="submit" class="primary" id="settings-save">Save</button>
@@ -311,6 +232,10 @@ async function api(path, body) {
   const res = await fetch(path, opts);
   let data = {};
   try { data = await res.json(); } catch (_) {}
+  if (res.status === 401 && data.signIn) {  // JDeck Server: the session ended.
+    location.href = "/login";
+    throw new Error("Sign in again.");
+  }
   if (!res.ok) throw new Error(data.error || `Request failed (${res.status}).`);
   return data;
 }
@@ -357,29 +282,35 @@ const STATE_LABELS = { RUNNING: "Downloading", IDLE: "Idle", PAUSE: "Paused", ST
 function render(s) {
   lastState = s;
   showVersion(s.version);
+  const f = s.features || {};
+  $("open-settings").hidden = !f.jdAddressEditable;
+  $("server-settings").hidden = !(f.controlPage && s.isLocal);  // Only on the server PC itself.
+  $("sign-out").hidden = !f.signOut;
 
-  const banners = $("banners");
-  banners.replaceChildren();
-  const sh = s.sharing || {};
-  const pill = $("share-pill");
-  pill.hidden = !(s.isLocal && sh.running);
-  pill.textContent = sh.running ? `Shared on network · ${sh.address}` : "";
-  if (s.isLocal && sh.enabled && !sh.running && sh.error) {
-    banners.append(el("div", { class: "banner err" },
-      `Network sharing is not working: ${sh.error}`,
-      el("button", { type: "button", class: "ghost", onclick: openSettings }, "Settings")));
+
+  if (s.needsSetup) {
+    $("dot").className = "dot";
+    $("status-text").textContent = "Not set up";
+    setBanner(el("div", { class: "banner warn" },
+      "Set the JDownloader address to start.",
+      el("button", { type: "button", class: "ghost", onclick: () => openSettings() }, "Settings")));
+    $("speed").textContent = "";
+    if (!render.setupShown) {  // First run: open Settings once by itself.
+      render.setupShown = true;
+      openSettings();
+    }
+    return;
   }
 
   if (!s.ok) {
     $("dot").className = "dot bad";
     $("status-text").textContent = s.offline ? "JDownloader not reachable" : "JDownloader error";
-    banners.append(el("div", { class: "banner err" },
-      `${s.error} (Address: ${s.jdUrl})`,
-      el("button", { type: "button", class: "ghost", onclick: openSettings }, "Change address")));
+    setBanner(jdErrorBanner(s, f));
     $("speed").textContent = "";
     return;
   }
 
+  setBanner(null);
   $("dot").className = "dot ok";
   $("status-text").textContent = STATE_LABELS[s.state] || s.state || "Connected";
   $("speed").textContent = speed(s.speed);
@@ -426,6 +357,33 @@ function render(s) {
         (p.status || p.finished) && el("span", { class: statusClass }, p.status || "Finished"),
         `${p.childCount || 0} file${p.childCount === 1 ? "" : "s"}`));
   }));
+}
+
+// Show one banner (or none). The page refreshes every 1.5 s; replacing an unchanged banner
+// would replace its buttons too, and a click could land on a button that was just removed.
+function setBanner(node) {
+  const box = $("banners");
+  const html = node ? node.outerHTML : "";
+  if (box.dataset.html === html) return;
+  box.dataset.html = html;
+  box.replaceChildren(...(node ? [node] : []));
+}
+
+// The JDownloader error banner. JDeck Desktop users can fix the address themselves.
+// On JDeck Server, other devices cannot change anything, so the banner only explains.
+function jdErrorBanner(s, f) {
+  const button = (label, onclick) => el("button", { type: "button", class: "ghost", onclick }, label);
+  if (f.jdAddressEditable) {
+    const canHelp = f.connectionHelp && (s.kind === "refused" || s.kind === "unreachable");
+    return el("div", { class: "banner err" }, `${s.error} (Address: ${s.jdUrl})`,
+      button("Change address", () => openSettings()),
+      canHelp && button("How to fix", () => openSettings(true)));
+  }
+  const text = s.offline
+    ? "JDeck Server cannot reach JDownloader on its computer. Check that JDownloader is running there."
+    : `JDownloader answered with an error: ${s.error}`;
+  return el("div", { class: "banner err" }, text,
+    f.controlPage && s.isLocal && button("Server settings", () => { location.href = "/server"; }));
 }
 
 async function refresh() {
@@ -572,67 +530,65 @@ $("update-open").addEventListener("click", async () => {
 });
 
 // ---------------------------------------------------------------- settings
-let settingsHasPassword = false;
-
-function showShareAddress(info) {
-  const box = $("share-address");
-  box.className = "share-address";
-  if (info.running) {
-    box.textContent = `On other devices, open ${info.address} and sign in with the password (any user name).`;
-  } else if (info.enabled && info.error) {
-    box.className = "share-address err";
-    box.textContent = info.error;
-  } else {
-    box.textContent = "";
-  }
+function showTestResult(text, kind) {
+  const box = $("test-result");
+  box.textContent = text;
+  box.className = "test-result" + (kind ? ` ${kind}` : "");
 }
 
-function updateShareOptions() {
-  $("share-options").hidden = !$("set-share").checked;
-}
-
-async function openSettings() {
+async function openSettings(openHelp = false) {
+  if ($("settings").open) return;
   try {
     const s = await api("/api/settings");
-    settingsHasPassword = s.hasPassword;
-    $("set-jd").value = s.jdUrl;
-    $("share-section").hidden = !s.isLocal;
-    $("set-share").checked = !!s.sharing.enabled;
-    $("set-port").value = s.port;
-    $("set-password").value = "";
-    $("set-password").placeholder = s.hasPassword ? "Leave empty to keep the current password" : "Required";
-    $("password-hint").textContent = s.hasPassword
-      ? "A password is set."
-      : "Other devices must type this password to use JDeck.";
-    showShareAddress(s.sharing);
-    updateShareOptions();
+    const f = s.features || {};
+    $("set-jd").value = s.jdUrl || "";
+    $("set-jd").disabled = !f.jdAddressEditable;
+    $("test-jd").hidden = !f.jdAddressEditable;
+    $("jd-help").hidden = !f.connectionHelp;
+    $("jd-help").open = openHelp && !!f.connectionHelp;
+    showTestResult("");
     $("settings").showModal();
+    if (!s.jdUrl) $("set-jd").focus();
   } catch (e) { toast(e.message, true); }
 }
-$("open-settings").addEventListener("click", openSettings);
+$("open-settings").addEventListener("click", () => openSettings());
+$("server-settings").addEventListener("click", () => { location.href = "/server"; });
+$("sign-out").addEventListener("click", async () => {
+  try { await api("/api/logout", {}); } catch (_) {}
+  location.href = "/login";
+});
 $("settings-cancel").addEventListener("click", () => $("settings").close());
-$("set-share").addEventListener("change", updateShareOptions);
+$("set-jd").addEventListener("input", () => showTestResult(""));
+
+$("test-jd").addEventListener("click", async () => {
+  const b = $("test-jd");
+  if (!$("set-jd").value.trim()) { showTestResult("Type the JDownloader address first.", "err"); $("set-jd").focus(); return; }
+  b.disabled = true;
+  showTestResult("Testing…");
+  try {
+    const r = await api("/api/test-connection", { jdUrl: $("set-jd").value });
+    const ok = r.result === "connected";
+    showTestResult(r.message, ok ? "ok" : "err");
+    if (!ok && !$("jd-help").hidden) $("jd-help").open = true;
+  } catch (e) {
+    showTestResult(e.message, "err");
+  } finally {
+    b.disabled = false;
+  }
+});
 
 $("settings-form").addEventListener("submit", (e) => {
   e.preventDefault();
-  const body = { jdUrl: $("set-jd").value };
-  if (!$("share-section").hidden) {
-    body.shareOnNetwork = $("set-share").checked;
-    const pw = $("set-password").value;
-    if (body.shareOnNetwork) {
-      if (!pw && !settingsHasPassword) { toast("Set a password for other devices first.", true); $("set-password").focus(); return; }
-      body.port = Number($("set-port").value);
-      if (pw) body.password = pw;
-    }
-  }
+  const body = $("set-jd").disabled ? {} : { jdUrl: $("set-jd").value };
   run(async () => {
-    const r = await api("/api/settings", body);
-    if (r.sharing && r.sharing.enabled && !r.sharing.running) {
-      showShareAddress(r.sharing);  // Keep the dialog open so the error is seen.
+    try {
+      await api("/api/settings", body);
+    } catch (err) {
+      showTestResult(err.message, "err");  // Keep the dialog open so the error is seen.
       return;
     }
     $("settings").close();
-    toast(r.sharing && r.sharing.running ? `Sharing on ${r.sharing.address}` : "Settings saved.");
+    toast("Settings saved.");
   });
 });
 

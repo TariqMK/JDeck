@@ -1,0 +1,2 @@
+# JDeck Desktop: the app window. Linux also needs pywebview[gtk] and WebKitGTK (see README).
+pywebview==6.2.1

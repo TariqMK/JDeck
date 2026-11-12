@@ -6,10 +6,10 @@ Writes assets/screenshots/<view>-light.png and <view>-dark.png (1040 x 800 px wi
   settings   the Settings dialog
 
 How it works:
-  1. Copies the app (jdeck.py, web/, assets/icon/) to a temporary folder, so JDeck creates
-     its own empty data folder there. Your real JDeck-data/ is never read or changed.
+  1. Copies the app (jdeck_desktop.py, core/, desktop/, web/, assets/icon/) to a temporary folder, so JDeck creates
+     its own data folder there. Your real JDeck-Desktop-data/ is never read or changed.
   2. Starts a fake JDownloader on 127.0.0.1 that answers with the sample data below.
-     Nothing is sent to the network. Network sharing stays off.
+     Nothing is sent to the network.
   3. Opens the app's page at the window's size, fills in the view and saves it.
 
 Run it from the project folder:
@@ -34,7 +34,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "assets" / "screenshots"
-WINDOW = (1040, 800)  # Same as the app window in jdeck.py.
+WINDOW = (1040, 800)  # Same as the app window in desktop/app.py.
 SCALE = "2"
 FAKE_JD_ADDRESS = "http://jd-host.local:3128"  # Shown in Settings. Never contacted.
 
@@ -95,11 +95,13 @@ class FakeJD(BaseHTTPRequestHandler):
 # ---------------------------------------------------------------- one theme, in its own process
 
 def copy_app(dest: Path, version_label: str) -> None:
-    shutil.copy2(ROOT / "jdeck.py", dest)
+    shutil.copy2(ROOT / "jdeck_desktop.py", dest)
+    for package in ("core", "desktop"):
+        shutil.copytree(ROOT / package, dest / package, ignore=shutil.ignore_patterns("__pycache__"))
     shutil.copytree(ROOT / "web", dest / "web")
     shutil.copytree(ROOT / "assets" / "icon", dest / "assets" / "icon")
     (dest / "_version.py").write_text(f'__version__ = "{version_label}"\n', encoding="utf-8")
-    data = dest / "JDeck-data"
+    data = dest / "JDeck-Desktop-data"
     data.mkdir()
     (data / "settings.json").write_text(json.dumps({"jd_url": FAKE_JD_ADDRESS}), encoding="utf-8")
 
@@ -113,17 +115,17 @@ def capture(theme: str, version_label: str) -> None:
     try:
         copy_app(temp, version_label)
         sys.path.insert(0, str(temp))
-        import jdeck  # The temporary copy.
+        from core import httpd, jd_api, settings as settings_mod  # The temporary copy.
+        from desktop.app import DESKTOP
 
         fake = ThreadingHTTPServer(("127.0.0.1", 0), FakeJD)
         threading.Thread(target=fake.serve_forever, daemon=True).start()
         fake_base = f"http://127.0.0.1:{fake.server_address[1]}"
-        real_build = jdeck.build_jd_url
-        jdeck.build_jd_url = lambda base, path, params: real_build(fake_base, path, params)
+        real_build = jd_api.build_jd_url
+        jd_api.build_jd_url = lambda base, path, params: real_build(fake_base, path, params)
 
-        settings = jdeck.Settings(str(temp / "JDeck-data"))
-        sharing = jdeck.Sharing(settings)
-        server = jdeck.make_server("127.0.0.1", 0, "local", settings, sharing)
+        settings = settings_mod.Settings(str(temp / "JDeck-Desktop-data"), DESKTOP.defaults)
+        server = httpd.make_server("127.0.0.1", 0, DESKTOP, settings)
         url = f"http://127.0.0.1:{server.server_address[1]}/"
 
         app = QApplication(sys.argv[:1])

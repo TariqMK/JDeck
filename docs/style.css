@@ -152,11 +152,7 @@ a:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-
 #lg-list .item { animation: rise .35s var(--ease) both; }
 #lg-list .item.leaving { opacity: 0; transform: translateY(-4px); transition: opacity .3s var(--ease), transform .3s var(--ease); }
 .share { display: flex; flex-direction: column; gap: 12px; }
-.check.on { margin-top: 4px; }
-.field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
-.field .fake-input { margin: 0; color: var(--text); }
-.field .port { width: 96px; }
-.share-address { margin: 0 !important; font-size: 13px !important; color: var(--text-2); }
+.share-address { font-size: 15px; color: var(--text); }
 
 .grid {
   list-style: none; margin: 48px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -181,6 +177,32 @@ a:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-
 .platform.mine { border-color: rgba(92, 184, 156, 0.55); }
 .platform.mine .track { background: var(--accent); }
 .fine { margin: 24px 0 0; color: var(--muted); font-size: 14px; }
+
+/* Edition switch: one set of 3 platform cards, for Desktop or Server */
+.download { position: relative; }
+.anchor { position: absolute; top: 0; }
+.edition-switch { display: inline-flex; gap: 4px; margin-top: 32px; padding: 4px; border: 1px solid var(--line-strong); border-radius: 12px; }
+.edition-switch[hidden] { display: none; }
+.edition-switch button {
+  font: inherit; font-size: 15px; font-weight: 500; color: var(--text-2); background: transparent; border: 0;
+  border-radius: 8px; padding: 8px 20px; cursor: pointer; transition: background-color .15s var(--ease), color .15s var(--ease);
+}
+.edition-switch button:hover { color: var(--text); }
+.edition-switch button[aria-pressed="true"] { background: var(--surface-2); color: var(--text); }
+.edition-switch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.edition-line { margin: 14px 0 0; color: var(--text-2); }
+.download[data-edition="desktop"] [data-for="server"],
+.download[data-edition="server"] [data-for="desktop"] { display: none; }
+.download .platforms { margin-top: 28px; }
+.hero-alt { margin: 14px 0 0; font-size: 14px; }
+.hero-alt a { color: var(--text-2); text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+.hero-alt a:hover { color: var(--text); }
+.hero-alt[hidden] { display: none; }
+.share-row { display: flex; align-items: center; gap: 16px; }
+.share-row > div { flex: 1; min-width: 0; }
+.share-row .share-address { margin: 0 0 10px; overflow-wrap: anywhere; }
+.share-row .qr { border-radius: 6px; background: #fff; flex: none; }
+.share-note { font-size: 13px; margin: 0; }
 
 /* Footer */
 .footer { border-top: 1px solid var(--line); }
@@ -220,6 +242,7 @@ a:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-
   .finder { grid-template-columns: minmax(0, 1fr); }
   .finder-paste { min-height: 0; }
   .grid { grid-template-columns: minmax(0, 1fr); }
+  .share-row { flex-direction: column; align-items: flex-start; }
   .footer-in { padding: 32px 16px 40px; }
 }
 @media (prefers-reduced-motion: reduce) {

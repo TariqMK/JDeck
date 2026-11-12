@@ -1,0 +1,289 @@
+<!doctype html>
+<!-- JDeck Server control page. Only answers on the server computer (127.0.0.1). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>JDeck Server</title>
+<link rel="icon" href="/icon.png">
+<link rel="stylesheet" href="/common.css">
+<style>
+.wrap { max-width: 640px; }
+header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+header img { width: 32px; height: 32px; border-radius: 7px; }
+header h1 { font-size: 20px; margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+header .version { color: var(--muted); font-size: 13px; }
+.spacer { flex: 1; }
+.card h2 { font-size: 15px; margin: 0 0 4px; font-weight: 650; }
+.lead { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.row input { flex: 1; min-width: 160px; }
+.row input[type=number] { flex: 0 0 120px; min-width: 0; }
+.status-line { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.dot.ok { background: var(--accent); }
+.dot.bad { background: var(--danger); }
+.share { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; }
+.share img { width: 132px; height: 132px; border-radius: 6px; background: #fff; display: block; }
+.address { font-size: 17px; font-weight: 600; overflow-wrap: anywhere; margin: 0 0 10px; }
+.result { font-size: 13px; margin-top: 8px; overflow-wrap: anywhere; }
+.result:empty { display: none; }
+.result.ok { color: var(--accent); }
+.result.err { color: var(--danger); }
+.toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+.toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
+.field-block { margin-bottom: 10px; }
+.quit { border-color: color-mix(in srgb, var(--danger) 40%, var(--line)); }
+button.danger-solid { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, var(--line)); }
+a { color: var(--accent); }
+.stopped { text-align: center; padding: 48px 16px; }
+@media (max-width: 480px) { .share { grid-template-columns: 1fr; } .share img { width: 160px; height: 160px; } }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <header>
+    <img src="/icon.png" alt="">
+    <h1>JDeck Server</h1>
+    <span class="version" id="version"></span>
+    <span class="spacer"></span>
+    <button type="button" class="ghost" id="open-jdeck">Open JDeck</button>
+  </header>
+
+  <section class="card">
+    <h2>Status</h2>
+    <div class="status-line"><span class="dot ok" id="run-dot"></span><span id="run-text">Loading…</span></div>
+    <div class="status-line" style="margin-top:6px"><span class="dot" id="jd-dot"></span><span id="jd-text">Checking JDownloader…</span></div>
+  </section>
+
+  <section class="card">
+    <h2>Phones and other devices</h2>
+    <p class="lead">Open this address on any device on your network. Sign in with the JDeck Server password.</p>
+    <div class="share">
+      <div>
+        <p class="address" id="net-address">–</p>
+        <button type="button" id="copy-address">Copy address</button>
+        <div class="result" id="copy-result" role="status" aria-live="polite"></div>
+      </div>
+      <img id="qr" alt="QR code of the network address" width="132" height="132">
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>JDownloader</h2>
+    <p class="lead">The JDownloader local API on this computer. Usually http://127.0.0.1:3128.</p>
+    <div class="row">
+      <input type="text" id="jd-url" spellcheck="false" autocomplete="off" aria-label="JDownloader address">
+      <button type="button" id="jd-test">Test connection</button>
+      <button type="button" class="primary" id="jd-save">Save</button>
+    </div>
+    <div class="result" id="jd-result" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Password</h2>
+    <p class="lead">Changing the password signs out every other device.</p>
+    <div class="field-block"><label class="field" for="pw-new">New password</label>
+      <input type="password" id="pw-new" autocomplete="new-password"></div>
+    <div class="field-block"><label class="field" for="pw-repeat">Repeat the password</label>
+      <input type="password" id="pw-repeat" autocomplete="new-password"></div>
+    <button type="button" id="pw-save">Change password</button>
+    <div class="result" id="pw-result" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Port</h2>
+    <p class="lead">Devices use this port in the address. After a change, open the new address on each device.</p>
+    <div class="row">
+      <input type="number" id="port" min="1024" max="65535" aria-label="Port">
+      <button type="button" id="port-save">Change port</button>
+    </div>
+    <div class="result" id="port-result" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Start at login</h2>
+    <label class="toggle"><input type="checkbox" id="autostart"> Start JDeck Server when I log in to this computer</label>
+    <div class="result" id="autostart-result" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Updates</h2>
+    <div class="row">
+      <span id="version-full" style="flex:1"></span>
+      <button type="button" id="update-check">Check for updates</button>
+    </div>
+    <div class="result" id="update-result" role="status" aria-live="polite"></div>
+    <button type="button" id="update-open" hidden style="margin-top:8px">Open release page</button>
+  </section>
+
+  <section class="card quit">
+    <h2>Quit JDeck Server</h2>
+    <p class="lead">Stops the server and removes the tray icon. Devices lose access until JDeck Server starts again.</p>
+    <button type="button" class="danger-solid" id="quit">Quit JDeck Server</button>
+  </section>
+</div>
+
+<div class="wrap stopped" id="stopped" hidden>
+  <h1 style="font-size:20px">JDeck Server has stopped.</h1>
+  <p class="lead">You can close this tab.</p>
+</div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+let status = null;
+let releaseUrl = "";
+
+async function api(path, body) {
+  const opts = body === undefined ? {} : {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-JDeck": "1" },
+    body: JSON.stringify(body),
+  };
+  const res = await fetch(path, opts);
+  let data = {};
+  try { data = await res.json(); } catch (_) {}
+  if (res.status === 401 && data.signIn) {
+    location.href = "/login?next=/server";
+    throw new Error("Sign in again.");
+  }
+  if (!res.ok) throw new Error(data.error || `Request failed (${res.status}).`);
+  return data;
+}
+
+function result(id, text, kind) {
+  const el = $(id);
+  el.textContent = text || "";
+  el.className = "result" + (kind ? ` ${kind}` : "");
+}
+
+async function busy(button, fn) {
+  if (button.disabled) return;
+  button.disabled = true;
+  try { await fn(); } finally { button.disabled = false; }
+}
+
+function show(s, first) {
+  status = s;
+  $("version").textContent = `v${s.version}`;
+  $("version-full").textContent = `JDeck Server v${s.version}`;
+  $("run-text").textContent = `Running on port ${s.port} · ${s.devices} device${s.devices === 1 ? "" : "s"} signed in`;
+  const addr = s.networkUrl || s.localUrl;
+  if ($("net-address").textContent !== addr) {
+    $("net-address").textContent = addr;
+    $("qr").src = `/api/server/qr.svg?u=${encodeURIComponent(addr)}`;
+  }
+  if (first) {
+    $("jd-url").value = s.jdUrl;
+    $("port").value = s.port;
+  }
+  $("autostart").checked = s.startAtLogin;
+}
+
+async function refresh(first = false) {
+  try { show(await api("/api/server/status"), first); } catch (e) { $("run-text").textContent = e.message; }
+  try {
+    const st = await api("/api/state");
+    $("jd-dot").className = "dot " + (st.ok ? "ok" : "bad");
+    $("jd-text").textContent = st.ok ? "JDownloader connected" : `JDownloader not reachable: ${st.error}`;
+  } catch (_) {}
+}
+
+$("open-jdeck").addEventListener("click", () => { location.href = "/"; });
+
+$("copy-address").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText($("net-address").textContent);
+    result("copy-result", "Copied.", "ok");
+  } catch (_) {
+    result("copy-result", "Could not copy. Select the address and copy it by hand.", "err");
+  }
+});
+
+$("jd-test").addEventListener("click", (e) => busy(e.currentTarget, async () => {
+  result("jd-result", "Testing…");
+  try {
+    const r = await api("/api/server/test-connection", { jdUrl: $("jd-url").value });
+    result("jd-result", r.message, r.result === "connected" ? "ok" : "err");
+  } catch (err) { result("jd-result", err.message, "err"); }
+}));
+
+$("jd-save").addEventListener("click", (e) => busy(e.currentTarget, async () => {
+  try {
+    const r = await api("/api/server/jd-url", { jdUrl: $("jd-url").value });
+    $("jd-url").value = r.jdUrl;
+    result("jd-result", "Saved.", "ok");
+    refresh();
+  } catch (err) { result("jd-result", err.message, "err"); }
+}));
+
+$("pw-save").addEventListener("click", (e) => busy(e.currentTarget, async () => {
+  const pw = $("pw-new").value;
+  if (!pw) { result("pw-result", "Type a new password.", "err"); return; }
+  if (pw !== $("pw-repeat").value) { result("pw-result", "The two passwords are not the same.", "err"); return; }
+  try {
+    await api("/api/server/password", { password: pw });
+    $("pw-new").value = $("pw-repeat").value = "";
+    result("pw-result", "Password changed. Other devices must sign in again.", "ok");
+    refresh();
+  } catch (err) { result("pw-result", err.message, "err"); }
+}));
+
+$("port-save").addEventListener("click", (e) => busy(e.currentTarget, async () => {
+  const port = Number($("port").value);
+  if (status && port === status.port) { result("port-result", "This is the current port."); return; }
+  try {
+    const r = await api("/api/server/port", { port });
+    result("port-result", `Moving to port ${port}…`, "ok");
+    setTimeout(() => { location.href = r.url; }, 400);
+  } catch (err) { result("port-result", err.message, "err"); }
+}));
+
+$("autostart").addEventListener("change", async (e) => {
+  const box = e.currentTarget;
+  box.disabled = true;
+  try {
+    const r = await api("/api/server/autostart", { enabled: box.checked });
+    box.checked = r.startAtLogin;
+    result("autostart-result", r.startAtLogin ? "JDeck Server starts when you log in." : "Start at login is off.", "ok");
+  } catch (err) {
+    box.checked = !box.checked;
+    result("autostart-result", err.message, "err");
+  } finally { box.disabled = false; }
+});
+
+$("update-check").addEventListener("click", (e) => busy(e.currentTarget, async () => {
+  result("update-result", "Checking…");
+  $("update-open").hidden = true;
+  let r;
+  try { r = await api("/api/update-check"); } catch (err) { r = { ok: false, error: err.message }; }
+  if (!r.ok) { result("update-result", r.error, "err"); return; }
+  releaseUrl = r.url;
+  if (r.status === "newer") result("update-result", `JDeck ${r.latest} is available. You have ${r.current}.`, "ok");
+  else if (r.status === "dev") result("update-result", `This is a development build. The latest release is ${r.latest}.`);
+  else result("update-result", `JDeck Server is up to date (${r.current}).`, "ok");
+  $("update-open").hidden = r.status === "current";
+}));
+
+$("update-open").addEventListener("click", async () => {
+  try { await api("/api/open-release", { url: releaseUrl }); } catch (err) { result("update-result", err.message, "err"); }
+});
+
+$("quit").addEventListener("click", async () => {
+  const n = status ? status.devices : 0;
+  const warn = n > 1 ? `\n\n${n} devices are signed in. They lose access until JDeck Server starts again.` : "";
+  if (!confirm(`Quit JDeck Server?${warn}`)) return;
+  try { await api("/api/server/quit", {}); } catch (_) {}
+  clearInterval(timer);
+  $("app").hidden = true;
+  $("stopped").hidden = false;
+});
+
+refresh(true);
+const timer = setInterval(() => { if (!document.hidden) refresh(); }, 5000);
+</script>
+</body>
+</html>

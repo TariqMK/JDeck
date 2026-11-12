@@ -1,0 +1,3 @@
+# JDeck Server: packages for the tray icon. The server itself uses the standard library only.
+pystray==0.19.5
+Pillow==13.0.0

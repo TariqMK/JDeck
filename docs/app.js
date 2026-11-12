@@ -2,7 +2,11 @@
 "use strict";
 
 const REPO = "TariqMK/JDeck";
-const ASSET = { windows: /windows-x64\.exe$/i, macos: /macos-arm64\.zip$/i, linux: /linux-x64\.tar\.gz$/i };
+const RELEASES = `https://github.com/${REPO}/releases/latest`;
+// Release files: JDeck-Desktop-vX.Y.Z-<platform> and JDeck-Server-vX.Y.Z-<platform>.
+// v1.0.0 has no edition in the name (JDeck-vX.Y.Z-<platform>); Desktop falls back to those.
+const PLATFORM_FILE = { windows: "windows-x64\\.exe", macos: "macos-arm64\\.zip", linux: "linux-x64\\.tar\\.gz" };
+const fileName = (prefix, key) => new RegExp(`^JDeck-${prefix}v\\d+\\.\\d+\\.\\d+-${PLATFORM_FILE[key]}$`, "i");
 const OS_NAME = { windows: "Windows", macos: "macOS", linux: "Linux" };
 const $ = (id) => document.getElementById(id);
 const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -20,6 +24,10 @@ function detectOS() {
 
 const os = detectOS();
 const hero = $("hero-download");
+const section = $("download");
+const files = { desktop: {}, server: {} };  // edition -> platform -> release asset
+let edition = location.hash === "#download-server" ? "server" : "desktop";
+
 if (os) {
   hero.textContent = `Download for ${OS_NAME[os]}`;
   document.querySelector(`.platform[data-os="${os}"]`)?.classList.add("mine");
@@ -27,20 +35,51 @@ if (os) {
   hero.href = "#download";
 }
 
+// Show the 3 platform cards for one edition. Without a matching file, a card opens the Releases page.
+function showEdition(next) {
+  edition = next;
+  section.dataset.edition = edition;
+  for (const b of document.querySelectorAll("#edition-switch button")) {
+    b.setAttribute("aria-pressed", String(b.dataset.edition === edition));
+  }
+  for (const card of document.querySelectorAll(".platform")) {
+    const asset = files[edition][card.dataset.os];
+    card.href = asset ? asset.browser_download_url : RELEASES;
+    card.querySelector(".size").textContent = asset ? ` · ${Math.max(1, Math.round(asset.size / 1048576))} MB` : "";
+  }
+}
+
+for (const b of document.querySelectorAll("#edition-switch button")) {
+  b.addEventListener("click", () => showEdition(b.dataset.edition));
+}
+$("hero-server").addEventListener("click", () => showEdition("server"));
+window.addEventListener("hashchange", () => { if (location.hash === "#download-server") showEdition("server"); });
+if (edition === "server") showEdition("server");  // The #download-server anchor scrolls the page.
+
+function findFiles(assets, prefix) {
+  const found = {};
+  for (const key of Object.keys(PLATFORM_FILE)) {
+    const asset = assets.find((a) => fileName(prefix, key).test(a.name));
+    if (asset) found[key] = asset;
+  }
+  return found;
+}
+
 fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { Accept: "application/vnd.github+json" } })
   .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
   .then((rel) => {
-    for (const asset of rel.assets || []) {
-      for (const [key, pattern] of Object.entries(ASSET)) {
-        if (!pattern.test(asset.name)) continue;
-        const card = document.querySelector(`.platform[data-os="${key}"]`);
-        if (card) {
-          card.href = asset.browser_download_url;
-          card.querySelector(".size").textContent = ` · ${Math.max(1, Math.round(asset.size / 1048576))} MB`;
-        }
-        if (key === os) hero.href = asset.browser_download_url;
-      }
+    const assets = rel.assets || [];
+    files.desktop = findFiles(assets, "Desktop-");
+    if (!Object.keys(files.desktop).length) files.desktop = findFiles(assets, "");  // v1.0.0 names
+    files.server = findFiles(assets, "Server-");
+    if (!Object.keys(files.server).length) {
+      // No Server build in this release yet: hide the switch and show Desktop only.
+      $("edition-switch").hidden = true;
+      $("hero-server").parentElement.hidden = true;
+      edition = "desktop";
     }
+    showEdition(edition);
+    if (os && files.desktop[os]) hero.href = files.desktop[os].browser_download_url;
     const date = new Date(rel.published_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
     $("dl-version").textContent = `${rel.tag_name} · ${date}`;
     $("hero-version").textContent = `${rel.tag_name} · Free and open source`;
