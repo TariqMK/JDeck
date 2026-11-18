@@ -5,25 +5,13 @@ A modern front end for JDownloader 2. Send links and watch your downloads. JDeck
 - **JDeck Desktop**: a window on the computer you use. It connects to JDownloader on your network.
 - **JDeck Server**: runs in the tray on the JDownloader computer. Phones, tablets and other computers use JDeck in a browser and sign in with a password.
 
-JDeck talks to JDownloader through its local API. It does not use MyJDownloader or any cloud service. No account. No tracking. Everything stays on your network.
+JDeck talks to JDownloader through its local API. It does not use MyJDownloader or any cloud service. No account. No tracking. Works without an internet connection. Everything stays on your network.
 
 **Website:** [tariqmk.github.io/JDeck](https://tariqmk.github.io/JDeck/)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/downloads-dark.png">
   <img src="assets/screenshots/downloads-light.png" alt="JDeck window: the Add links box and the download list with one running, one finished and one failed package" width="840">
-</picture>
-
-## Screenshots
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/add-links-dark.png">
-  <img src="assets/screenshots/add-links-light.png" alt="JDeck with two pasted links, two packages waiting in the LinkGrabber and the download list" width="840">
-</picture>
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/settings-dark.png">
-  <img src="assets/screenshots/settings-light.png" alt="JDeck Desktop Settings: the JDownloader address, the Test connection button and the connection help" width="840">
 </picture>
 
 ## Which Edition Do I Need?
@@ -34,6 +22,22 @@ JDeck talks to JDownloader through its local API. It does not use MyJDownloader 
 | Use JDeck on phones, tablets or any browser at home | **JDeck Server** on the JDownloader computer |
 | Keep JDownloader's API closed to the network | **JDeck Server** |
 | Both | Both. They do not need each other. |
+
+How each edition reaches JDownloader:
+
+```mermaid
+flowchart LR
+  subgraph desktop["JDeck Desktop"]
+    D["JDeck Desktop<br>on your computer"] -- "port 3128, no password" --> J1["JDownloader 2"]
+  end
+  subgraph server["JDeck Server"]
+    P["Phone, tablet<br>or any browser"] -- "port 23128, password" --> S["JDeck Server"]
+    S -- "127.0.0.1:3128" --> J2["JDownloader 2<br>on the same computer"]
+  end
+```
+
+- JDeck Desktop connects to the JDownloader local API directly. If JDownloader is on another computer, its API must be open to the network.
+- JDeck Server runs on the JDownloader computer. The JDownloader API stays closed to the network. Other devices sign in to JDeck Server with a password.
 
 ## Features
 
@@ -59,6 +63,18 @@ JDeck Server:
 - Tray icon with a control page: network address with a QR code for phones, password, port, start at login and **Quit**.
 - Runs without a desktop with `--headless`.
 
+## Screenshots
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/add-links-dark.png">
+  <img src="assets/screenshots/add-links-light.png" alt="JDeck with two pasted links, two packages waiting in the LinkGrabber and the download list" width="840">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/settings-dark.png">
+  <img src="assets/screenshots/settings-light.png" alt="JDeck Desktop Settings: the JDownloader address, the Test connection button and the connection help" width="840">
+</picture>
+
 ## Download
 
 Get the latest version from the [Releases page](../../releases/latest).
@@ -79,6 +95,25 @@ Get the latest version from the [Releases page](../../releases/latest).
 - Linux: WebKitGTK. Install it if it is not there, for example `sudo apt install gir1.2-webkit2-4.1` on Ubuntu. Without it, JDeck Desktop opens in your web browser instead.
 
 **Note:** JDeck Server needs no web engine. Devices use their own browser.
+
+## Privacy
+
+- Works without an internet connection. JDeck needs only your home network. The update check is the only connection to the internet.
+- No telemetry, analytics or tracking.
+- No account and no cloud service. JDeck does not use MyJDownloader.
+- JDeck Desktop makes these network connections only:
+  - To the JDownloader address you set, to send links and read the download list.
+  - To GitHub (api.github.com), only when you select the version number. It sends nothing else, and nothing is downloaded.
+- The JDeck Desktop window talks to JDeck Desktop through `127.0.0.1` only. Other computers cannot reach it.
+- JDeck Server makes these network connections only:
+  - It serves the JDeck page on your network, on port `23128` by default.
+  - To JDownloader on `127.0.0.1`.
+  - To GitHub (api.github.com), only when you select **Check for updates**.
+- Settings are stored in a folder next to the program: `JDeck-Desktop-data` or `JDeck-Server-data`. The password is stored as a salted hash, not as text.
+- To move JDeck to another computer, copy the program and its data folder.
+- **Start at login** writes one file outside the data folder, only while the option is on: a shortcut in the Windows Startup folder, a LaunchAgent in `~/Library/LaunchAgents/` on macOS, or a file in `~/.config/autostart/` on Linux.
+
+**Note:** JDeck Server uses plain HTTP. A device on the same network can read the traffic. Use JDeck Server only on a trusted home network.
 
 ## Set Up JDeck Desktop
 
@@ -215,24 +250,6 @@ JDeck does not check for updates by itself.
 
 If a newer version is available, select **Open release page**. Download the new version and replace the old program. Keep the data folder next to it.
 
-## Privacy
-
-- No telemetry, analytics or tracking.
-- No account and no cloud service. JDeck does not use MyJDownloader.
-- JDeck Desktop makes these network connections only:
-  - To the JDownloader address you set, to send links and read the download list.
-  - To GitHub (api.github.com), only when you select the version number. It sends nothing else, and nothing is downloaded.
-- The JDeck Desktop window talks to JDeck Desktop through `127.0.0.1` only. Other computers cannot reach it.
-- JDeck Server makes these network connections only:
-  - It serves the JDeck page on your network, on port `23128` by default.
-  - To JDownloader on `127.0.0.1`.
-  - To GitHub (api.github.com), only when you select **Check for updates**.
-- Settings are stored in a folder next to the program: `JDeck-Desktop-data` or `JDeck-Server-data`. The password is stored as a salted hash, not as text.
-- To move JDeck to another computer, copy the program and its data folder.
-- **Start at login** writes one file outside the data folder, only while the option is on: a shortcut in the Windows Startup folder, a LaunchAgent in `~/Library/LaunchAgents/` on macOS, or a file in `~/.config/autostart/` on Linux.
-
-**Note:** JDeck Server uses plain HTTP. A device on the same network can read the traffic. Use JDeck Server only on a trusted home network.
-
 ## Settings
 
 ### JDeck Desktop
@@ -260,21 +277,29 @@ Requires Python 3.10 or later.
    ```bash
    python -m venv .venv
    ```
-   On Windows, use `.venv/Scripts/python`. On macOS and Linux, use `.venv/bin/python`.
-2. Install the packages for the edition you want:
+2. Activate it. On macOS and Linux:
    ```bash
-   .venv/Scripts/python -m pip install -r requirements-desktop.txt
+   source .venv/bin/activate
+   ```
+   On Windows:
+   ```bash
+   .venv\Scripts\activate
+   ```
+3. Install the packages for the edition you want. For JDeck Desktop:
+   ```bash
+   python -m pip install -r requirements-desktop.txt
+   ```
+   For JDeck Server:
+   ```bash
+   python -m pip install -r requirements-server.txt
+   ```
+   **Note:** On Linux, JDeck Desktop also needs `pywebview[gtk]` and the WebKitGTK system packages.
+4. Start an edition:
+   ```bash
+   python jdeck_desktop.py
    ```
    ```bash
-   .venv/Scripts/python -m pip install -r requirements-server.txt
-   ```
-   On Linux, JDeck Desktop also needs `pywebview[gtk]` and the WebKitGTK system packages.
-3. Start an edition:
-   ```bash
-   .venv/Scripts/python jdeck_desktop.py
-   ```
-   ```bash
-   .venv/Scripts/python jdeck_server.py
+   python jdeck_server.py
    ```
 
 For how the code is organised, see [ARCHITECTURE.md](ARCHITECTURE.md).
@@ -317,16 +342,11 @@ The website is one page in `docs/`: `index.html`, `style.css` and `app.js`. It h
 
 **Note:** Opening `docs/index.html` as a file does not load the styles and scripts. Use the local server.
 
-### Publish the website
+### Publishing
 
-Do these steps one time:
+GitHub Pages publishes the website from the `main` branch, folder `/docs`. Each push to `main` updates the website at [tariqmk.github.io/JDeck](https://tariqmk.github.io/JDeck/).
 
-1. On GitHub, open **Settings > Pages**.
-2. In **Source**, select **Deploy from a branch**.
-3. Select the branch **main** and the folder **/docs**. Select **Save**.
-4. On the repository page, select the gear next to **About**. Select **Use your GitHub Pages website**.
-
-After that, each push to `main` updates the website.
+### Download links
 
 The download section has a **Desktop | Server** switch above the 3 platform cards. The cards find their files on the latest release by name (`JDeck-Desktop-v…` and `JDeck-Server-v…`). A link to `#download-server` opens the page with **Server** selected.
 
